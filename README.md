@@ -4,6 +4,7 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 
 ### Tools
 - 🪝 **[Hooker](https://github.com/RelentlessOldMan/Hooker)** — a pixel-mascot taskbar widget that auto-approves Claude Code prompts per session and shows, at a glance, which one needs you.
+- 〰️ **[Subtap](https://github.com/RelentlessOldMan/Subtap)** — a single-file, dependency-free browser tool for retiming song captions (`.srt`) by ear: waveform, tap-sync, and per-line deltas.
 
 ### Elsewhere
 - 💼 [LinkedIn](https://www.linkedin.com/in/barney-anda-9655a3277/)
