@@ -15,5 +15,5 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 
 ### Elsewhere
 - 🌐 [RelentlessOldMusic.com](https://relentlessoldmusic.com/)
-- 🎵 [YouTube — RelentlessOldMusic](https://www.youtube.com/@RelentlessOldMusic)
+- 🎵 [RelentlessOldMusic (YouTube)](https://www.youtube.com/@RelentlessOldMusic)
 - 💼 [LinkedIn](https://www.linkedin.com/in/barney-anda-9655a3277/)
