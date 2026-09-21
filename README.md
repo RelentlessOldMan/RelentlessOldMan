@@ -8,7 +8,7 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 - 🔪 **[CodeCarver](https://github.com/RelentlessOldMan/CodeCarver)** — *(WIP, not yet real-world tested)* carves a huge, messy repo down to only the code needed to build & run one thing: reachability slicing generalized to any language and your build config, at both file and function level.
 
 ### Music
-- 〰️ **[Subtap](https://github.com/RelentlessOldMan/Subtap)** — a single-file, dependency-free browser tool for retiming song captions (`.srt`) by ear: waveform, tap-sync, and per-line deltas.
+- 〰️ **[Subtap](https://github.com/RelentlessOldMan/Subtap)** — a single-file, dependency-free desktop tool for retiming song captions (`.srt`) by ear: waveform, tap-sync, and per-line deltas.
 - ▶️ **[Subsync](https://github.com/RelentlessOldMan/Subsync)** — a single-file, dependency-free Windows tool that plays a song's captions (`.srt`) back as keystrokes, driving a lagging synced-lyric display back into time by hand. Sibling to Subtap.
 
 ### Rhythm Gaming
