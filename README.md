@@ -6,6 +6,7 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 - 🪝 **[Hooker](https://github.com/RelentlessOldMan/Hooker)** — a pixel-mascot taskbar widget that auto-approves Claude Code prompts per session and shows, at a glance, which one needs you.
 - 🧭 **[CodeCompass](https://github.com/RelentlessOldMan/CodeCompass)** — a fully-local code search & navigation engine that cuts the tokens an AI coding agent spends finding code: lexical + symbolic + semantic, memory-mapped, no GPU or cloud.
 - 🔪 **[CodeCarver](https://github.com/RelentlessOldMan/CodeCarver)** — *(WIP, not yet real-world tested)* carves a huge, messy repo down to only the code needed to build & run one thing: reachability slicing generalized to any language and your build config, at both file and function level.
+- 📡 **[Discordinator](https://github.com/RelentlessOldMan/Discordinator)** — a CLI + MCP server that relays messages between AI coding sessions on different machines through a private Discord server: one bot, per-project channels, new-only handoff, and ✅ read-acks.
 
 ### Music
 - 〰️ **[Subtap](https://github.com/RelentlessOldMan/Subtap)** — a single-file, dependency-free desktop tool for retiming song captions (`.srt`) by ear: waveform, tap-sync, and per-line deltas.
