@@ -21,6 +21,7 @@ work over reports, while preserving the project's intended behavior and architec
 |--------|------------|
 | [`Spec_DiagnosticSystem.md`](Spec_DiagnosticSystem.md) | **Build** a local diagnostics/logging/support system — centralized logging, breadcrumbs, exception capture, and a one-click **Save Diagnostic Report** package (with secret redaction) so a remote user's bug report is actually investigable. |
 | [`Spec_CrashRecovery.md`](Spec_CrashRecovery.md) | **Build** a crash-recovery/autosave safety net — atomic, versioned recovery snapshots separate from normal saves, abnormal-shutdown detection, and explicit restore, so a crash loses minimal work and *never* corrupts the last known-good save. |
+| [`Spec_Testing.md`](Spec_Testing.md) | **Build** a comprehensive, maintainable automated test suite — risk-first (persistence round-trips, failure/cancellation paths, dirty-state, recovery), deterministic and isolated, fast + full tiers, wired into CI. Optimizes for confidence, not coverage %. |
 
 ## CodeReview.md — code hardening
 
@@ -105,6 +106,22 @@ never-saved documents. Pairs naturally with `Spec_DiagnosticSystem.md` for loggi
 Ends with golden failure scenarios and acceptance criteria.
 
 Best for any app where users create and edit work they'd hate to lose.
+
+## Spec_Testing.md — automated testing strategy
+
+An implementation spec (not a review): stand up a comprehensive, maintainable test
+suite whose goal is *confidence*, not a coverage number — explicitly avoiding hundreds
+of trivial getter/setter tests. It tests behavior over implementation, prioritizes by
+risk (data loss, corrupt save/load, invalid state transitions, security), and covers
+happy + failure + boundary + invalid-input paths, persistence round-trips (save →
+destroy in-memory → reload → compare), dirty-state, cancellation and nested
+cancellation, crash-recovery and diagnostic-redaction (when those exist), stale-async
+results, fuzzing for parsers, plus fast/full tiers, deterministic isolated tests, CI
+wiring, and a meta-check: deliberately break important behavior and confirm the suite
+catches it. Complements `Spec_CrashRecovery.md` and `Spec_DiagnosticSystem.md` — it
+tests the subsystems they build.
+
+Best for any project mature enough to protect against regressions (i.e. most of them).
 
 ## How to use
 
