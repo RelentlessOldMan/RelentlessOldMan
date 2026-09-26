@@ -9,6 +9,7 @@ behavior and architecture.
 |--------|------------|
 | [`CodeReview.md`](CodeReview.md) | A no-stone-unturned **code** hardening & quality pass — correctness, defensive programming, error handling, resource/concurrency safety, security, performance, tests. |
 | [`CodeReview_UI.md`](CodeReview_UI.md) | A no-stone-unturned **UI/UX** hardening pass — state correctness, cancellation paths, control/visual consistency, resizing/DPI, focus/keyboard, error and empty states. |
+| [`CodeReview_Workflow.md`](CodeReview_Workflow.md) | An end-to-end **workflow & data-lifecycle** pass — import/edit/save/reopen/export, dirty-state correctness, save-failure safety, chained-cancellation, so the user never loses or corrupts work. |
 
 ## CodeReview.md — code hardening
 
@@ -35,9 +36,24 @@ final-polish passes.
 
 Best for desktop/GUI apps (WinForms/WPF, Electron, browser UIs, etc.).
 
+## CodeReview_Workflow.md — workflow & data-lifecycle hardening
+
+Reviews the application as a *complete lifecycle of user work* rather than a set of
+screens. It models the workflow as a state machine (nothing loaded → importing →
+modified → saving → saved → exporting → …) and hammers the transitions where work can
+be lost or corrupted: dirty-state correctness, save round-trips (save → close →
+reopen → verify everything persisted), repeated saves, save-failure safety
+(atomic/temp-file writes; a failed save must never look successful), import being
+non-destructive to current work, chained-cancellation (`Open New → unsaved → Save →
+Save As → Cancel` must abort the whole thing), file identity, export-is-not-save,
+recent files, and full end-to-end user journeys. The golden rule: preserve current
+valid state, attempt the new operation, commit the transition only after it succeeds.
+
+Best for any app where the user creates and saves work (editors, project-based tools).
+
 ## How to use
 
 Point a Claude Code session at the repo you want reviewed, then paste the prompt (or
-say "follow `Development_Prompts/CodeReview.md`"). Run the two separately — a codebase
-pass and a UI pass are different jobs. For a GUI app, do the code pass first, then the
-UI pass.
+say "follow `Development_Prompts/CodeReview.md`"). Run them separately — each is a
+different job. For a GUI, project-based app, a good order is: **code** pass first, then
+**workflow**, then **UI**.
