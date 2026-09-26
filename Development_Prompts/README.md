@@ -20,6 +20,7 @@ work over reports, while preserving the project's intended behavior and architec
 | Prompt | Use it for |
 |--------|------------|
 | [`Spec_DiagnosticSystem.md`](Spec_DiagnosticSystem.md) | **Build** a local diagnostics/logging/support system — centralized logging, breadcrumbs, exception capture, and a one-click **Save Diagnostic Report** package (with secret redaction) so a remote user's bug report is actually investigable. |
+| [`Spec_CrashRecovery.md`](Spec_CrashRecovery.md) | **Build** a crash-recovery/autosave safety net — atomic, versioned recovery snapshots separate from normal saves, abnormal-shutdown detection, and explicit restore, so a crash loses minimal work and *never* corrupts the last known-good save. |
 
 ## CodeReview.md — code hardening
 
@@ -88,6 +89,22 @@ silently bundled — and it stays local by default (no telemetry unless asked). 
 end-to-end acceptance criteria.
 
 Best for any app you ship to users and have to support at a distance.
+
+## Spec_CrashRecovery.md — crash-recovery / autosave
+
+An implementation spec (not a review): build a generic safety net around Save so a
+crash, kill, or power loss loses the least practical work — while treating the user's
+last known-good save as sacred. Covers recovery snapshots stored *separately* from
+normal saves, atomic/interruption-resistant writes with a small number of bounded
+generations, dirty-state integration and debounced background snapshots (no UI
+freezes), abnormal-shutdown detection, startup discovery with an explicit
+**Recover / Discard / Later** choice, recovered state treated as unsaved (never
+auto-overwriting the original file), correct Save/Save As/failed-save/cancel
+interactions, corrupt-recovery fallback, validate-before-restore, and recovery of
+never-saved documents. Pairs naturally with `Spec_DiagnosticSystem.md` for logging.
+Ends with golden failure scenarios and acceptance criteria.
+
+Best for any app where users create and edit work they'd hate to lose.
 
 ## How to use
 
