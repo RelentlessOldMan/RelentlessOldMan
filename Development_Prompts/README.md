@@ -13,6 +13,7 @@ work over reports, while preserving the project's intended behavior and architec
 | [`CodeReview.md`](CodeReview.md) | A no-stone-unturned **code** hardening & quality pass — correctness, defensive programming, error handling, resource/concurrency safety, security, performance, tests. |
 | [`CodeReview_UI.md`](CodeReview_UI.md) | A no-stone-unturned **UI/UX** hardening pass — state correctness, cancellation paths, control/visual consistency, resizing/DPI, focus/keyboard, error and empty states. |
 | [`CodeReview_Workflow.md`](CodeReview_Workflow.md) | An end-to-end **workflow & data-lifecycle** pass — import/edit/save/reopen/export, dirty-state correctness, save-failure safety, chained-cancellation, so the user never loses or corrupts work. |
+| [`CodeReview_Performance.md`](CodeReview_Performance.md) | A measure-first **performance, scalability & resource** pass — algorithmic complexity, UI responsiveness, allocations/leaks, caching, scale/stress testing, under realistic and worst-case workloads. |
 
 ### Implementation specs
 
@@ -60,6 +61,19 @@ valid state, attempt the new operation, commit the transition only after it succ
 
 Best for any app where the user creates and saves work (editors, project-based tools).
 
+## CodeReview_Performance.md — performance & scalability hardening
+
+A measure-first sweep for *real* performance problems — explicitly not speculative
+micro-optimization. It maps the performance model and hot paths, establishes baselines
+and profiles, then hunts algorithmic complexity, UI-thread blocking, event storms,
+redundant work, allocations, memory/resource leaks, unbounded growth, cache
+correctness, stale async results, startup/shutdown cost, and behavior under scale
+(empty → 10k+ items), long sessions, slow dependencies, and lower-end machines — fixing
+what matters, re-profiling as bottlenecks move, and never trading correctness for speed.
+Ends with a stress pass and before/after measurements.
+
+Best for anything that gets slow with large data, long sessions, or repeated operations.
+
 ## Spec_DiagnosticSystem.md — diagnostics/support system
 
 An implementation spec (not a review): build a robust, reusable local diagnostics
@@ -80,5 +94,6 @@ Best for any app you ship to users and have to support at a distance.
 Point a Claude Code session at the repo you want worked on, then paste the prompt (or
 say "follow `Development_Prompts/CodeReview.md`"). Run them separately — each is a
 different job. For a GUI, project-based app, a good order for the review passes is:
-**code** first, then **workflow**, then **UI**. The `Spec_*` prompts are independent —
-run one whenever you want to build that subsystem.
+**code** first, then **workflow**, then **UI**, then **performance** (harden behavior
+before chasing speed). The `Spec_*` prompts are independent — run one whenever you want
+to build that subsystem.
