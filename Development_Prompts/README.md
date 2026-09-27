@@ -14,6 +14,7 @@ work over reports, while preserving the project's intended behavior and architec
 | [`CodeReview_UI.md`](CodeReview_UI.md) | A no-stone-unturned **UI/UX** hardening pass — state correctness, cancellation paths, control/visual consistency, resizing/DPI, focus/keyboard, error and empty states. |
 | [`CodeReview_Workflow.md`](CodeReview_Workflow.md) | An end-to-end **workflow & data-lifecycle** pass — import/edit/save/reopen/export, dirty-state correctness, save-failure safety, chained-cancellation, so the user never loses or corrupts work. |
 | [`CodeReview_Performance.md`](CodeReview_Performance.md) | A measure-first **performance, scalability & resource** pass — algorithmic complexity, UI responsiveness, allocations/leaks, caching, scale/stress testing, under realistic and worst-case workloads. |
+| [`CodeReview_UtilLibrary.md`](CodeReview_UtilLibrary.md) | A stricter-than-normal **reusable-library / common-code** pass — public API as a long-term contract, misuse-resistance, portability, thread-safety, dependency hygiene, security-sensitive helpers, plus a KEEP/IMPROVE/MERGE/SPLIT/MOVE/DEPRECATE/DELETE inventory. |
 
 ### Implementation specs
 
@@ -76,6 +77,23 @@ Ends with a stress pass and before/after measurements.
 
 Best for anything that gets slow with large data, long sessions, or repeated operations.
 
+## CodeReview_UtilLibrary.md — reusable-library hardening
+
+A review held to a deliberately higher standard than a normal code review, because a
+defect or bad API in shared code propagates into *every* consumer. It inventories the
+public surface and classifies each major component (KEEP / IMPROVE / MERGE / SPLIT /
+MOVE / DEPRECATE / DELETE), then treats every public API as a long-term contract:
+naming/parameter/return/null/exception design, misuse-resistance ("pit of success"),
+ownership and disposal, thread-safety and async contracts, portability and platform
+isolation, culture/Unicode/encoding/time correctness, dependency hygiene (a library's
+deps propagate outward), security-sensitive helpers (paths, processes, archives,
+serialization, crypto), no surprise global state / console / UI, and consumer
+simulation from the outside without reading the source. Flags accidental breaking
+changes and junk-drawer sprawl.
+
+Best for a shared "tool belt" / common-code library consumed by multiple projects
+(rather than an end-user app).
+
 ## Spec_DiagnosticSystem.md — diagnostics/support system
 
 An implementation spec (not a review): build a robust, reusable local diagnostics
@@ -129,5 +147,7 @@ Point a Claude Code session at the repo you want worked on, then paste the promp
 say "follow `Development_Prompts/CodeReview.md`"). Run them separately — each is a
 different job. For a GUI, project-based app, a good order for the review passes is:
 **code** first, then **workflow**, then **UI**, then **performance** (harden behavior
-before chasing speed). The `Spec_*` prompts are independent — run one whenever you want
-to build that subsystem.
+before chasing speed). `CodeReview_UtilLibrary.md` is for **shared libraries** rather
+than apps — reach for it (in place of or alongside the code pass) when the project is a
+reusable tool belt. The `Spec_*` prompts are independent — run one whenever you want to
+build that subsystem.
