@@ -15,6 +15,7 @@ work over reports, while preserving the project's intended behavior and architec
 | [`CodeReview_Workflow.md`](CodeReview_Workflow.md) | An end-to-end **workflow & data-lifecycle** pass — import/edit/save/reopen/export, dirty-state correctness, save-failure safety, chained-cancellation, so the user never loses or corrupts work. |
 | [`CodeReview_Performance.md`](CodeReview_Performance.md) | A measure-first **performance, scalability & resource** pass — algorithmic complexity, UI responsiveness, allocations/leaks, caching, scale/stress testing, under realistic and worst-case workloads. |
 | [`CodeReview_UtilLibrary.md`](CodeReview_UtilLibrary.md) | A stricter-than-normal **reusable-library / common-code** pass — public API as a long-term contract, misuse-resistance, portability, thread-safety, dependency hygiene, security-sensitive helpers, plus a KEEP/IMPROVE/MERGE/SPLIT/MOVE/DEPRECATE/DELETE inventory. |
+| [`CodeReview_PuzzleGame.md`](CodeReview_PuzzleGame.md) | A specialized **puzzle-game logic / gameplay / state** pass — rule invariants, solvability & unique-solution validation, completion correctness, softlocks, undo/redo/restart/hints/save-resume, stale async results, and score/timer exploits. Supplements the general passes. |
 
 ### Implementation specs
 
@@ -94,6 +95,24 @@ changes and junk-drawer sprawl.
 Best for a shared "tool belt" / common-code library consumed by multiple projects
 (rather than an end-user app).
 
+## CodeReview_PuzzleGame.md — puzzle-game logic & state
+
+A specialized pass that **supplements** the general reviews (code / UI / workflow /
+performance / testing) for puzzle games specifically. It infers the actual game rules
+and verifies the implementation enforces them everywhere: rule invariants and a single
+source of truth for rules (so UI, engine, solver, hints, generator, and win-checker
+can't disagree), legal-move validation at the model layer (not just disabled buttons),
+completion correctness (no false positive/negative wins, multiple-solution handling),
+puzzle solvability and unique-solution validation, solver/generator correctness and
+termination, softlock/hardlock hunting, undo/redo/restart/new-game state hygiene, hint
+correctness and staleness, save/resume and corrupt-save safety, stale async results
+(old puzzle's solver mustn't touch the new one), score/timer exploits, and heavy
+automated testing (golden/regression puzzles, generated-batch checks, action-sequence
+fuzzing, an invariant checker). The standard: the puzzle is hard because the *puzzle*
+is hard, not because the software fights the player.
+
+Best for puzzle games — run it alongside the general passes, not instead of them.
+
 ## Spec_DiagnosticSystem.md — diagnostics/support system
 
 An implementation spec (not a review): build a robust, reusable local diagnostics
@@ -149,5 +168,6 @@ different job. For a GUI, project-based app, a good order for the review passes 
 **code** first, then **workflow**, then **UI**, then **performance** (harden behavior
 before chasing speed). `CodeReview_UtilLibrary.md` is for **shared libraries** rather
 than apps — reach for it (in place of or alongside the code pass) when the project is a
-reusable tool belt. The `Spec_*` prompts are independent — run one whenever you want to
-build that subsystem.
+reusable tool belt. `CodeReview_PuzzleGame.md` is a **supplemental** pass for puzzle
+games — run it alongside the general passes. The `Spec_*` prompts are independent — run
+one whenever you want to build that subsystem.
