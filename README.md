@@ -4,6 +4,7 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 
 ### Dev / AI
 - 🪝 **[Hooker](https://github.com/RelentlessOldMan/Hooker)** — a pixel-mascot taskbar widget that auto-approves Claude Code prompts per session and shows, at a glance, which one needs you.
+- 👁️ **[ClaudeWatch](https://github.com/RelentlessOldMan/ClaudeWatch)** — a tiny colored HUD for Claude Code: model, context usage, directory, and current tool at a glance.
 - 🧭 **[CodeCompass](https://github.com/RelentlessOldMan/CodeCompass)** — a fully-local code search & navigation engine that cuts the tokens an AI coding agent spends finding code: lexical + symbolic + semantic, memory-mapped, no GPU or cloud.
 - 🔪 **[CodeCarver](https://github.com/RelentlessOldMan/CodeCarver)** — *(WIP, not yet real-world tested)* carves a huge, messy repo down to only the code needed to build & run one thing: reachability slicing generalized to any language and your build config, at both file and function level.
 - 🧬 **[CodeSpawner](https://github.com/RelentlessOldMan/CodeSpawner)** — a deterministic generator of synthetic code corpora for stress-testing indexers, search, and carvers at 100 GB+ scale (giant >1 GB headers amid tens of thousands of tiny files), with a machine-checkable ground-truth manifest. Feeds CodeCompass and CodeCarver.
