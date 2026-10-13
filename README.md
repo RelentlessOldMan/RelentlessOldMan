@@ -12,7 +12,10 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 - 📡 **[Discordinator](https://github.com/RelentlessOldMan/Discordinator)** — a CLI + MCP server that relays messages between AI coding sessions on different machines through a private Discord server: one bot, per-project channels, new-only handoff, and ✅ read-acks.
 - 🚦 **[ComputeWarden](https://github.com/RelentlessOldMan/ComputeWarden)** — a machine-wide coordination service over MCP that stops multiple AI agents and build tools from saturating one machine at once: cooperative, lease-based reservations plus auto-detected heavy processes, via a local daemon and a thin MCP adapter.
 - 🧰 **[ToolBelt](https://github.com/RelentlessOldMan/ToolBelt)** — a zero-dependency, cross-platform C# utility library: 180+ small, heavily-tested drop-in helpers across 22 focused divisions (collections, numerics, text, graphs, intervals, async, signal, statistics, and more).
+
+### Dev / AI Demos
 - 🐾 **[FunctionTraceDemo](https://github.com/RelentlessOldMan/FunctionTraceDemo)** — automatic compiler-based function tracing for C/C++ (Clang/LLVM): enter/exit, parameters, and return values injected at build time with zero source changes, built up as `-finstrument-functions`, a custom LLVM pass, and a libclang descriptor generator.
+- 🔌 **[ChatbotAddonDemo](https://github.com/RelentlessOldMan/ChatbotAddonDemo)** — a reference demo of adding AI to a legacy Windows desktop tool (.NET/WPF): an opt-in chat assistant with approvals for anything that writes files or drives hardware, MCP access for coding agents via the console tool, and the customer paying for their own tokens, with diagrams and decision records explaining why.
 
 ### Music
 - 〰️ **[Subtap](https://github.com/RelentlessOldMan/Subtap)** — a single-file, dependency-free desktop tool for retiming song captions (`.srt`) by ear: waveform, tap-sync, and per-line deltas.
