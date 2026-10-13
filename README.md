@@ -14,6 +14,7 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 - 🧰 **[ToolBelt](https://github.com/RelentlessOldMan/ToolBelt)** — a zero-dependency, cross-platform C# utility library: 180+ small, heavily-tested drop-in helpers across 22 focused divisions (collections, numerics, text, graphs, intervals, async, signal, statistics, and more).
 
 ### Dev / AI Demos
+- 🎬 **[DemoForge](https://github.com/RelentlessOldMan/DemoForge)** — capture what a Claude agent actually did on a real task, freeze it, and render it into records, slides, and a narrated, captioned video, without re-running the agent or inventing a single action. Ships with ClaudeDemoKit: ten engineering demos (MATLAB/Octave, Python, logs, spreadsheets, specs) built around one Kalman-filter story.
 - 🐾 **[FunctionTraceDemo](https://github.com/RelentlessOldMan/FunctionTraceDemo)** — automatic compiler-based function tracing for C/C++ (Clang/LLVM): enter/exit, parameters, and return values injected at build time with zero source changes, built up as `-finstrument-functions`, a custom LLVM pass, and a libclang descriptor generator.
 - 🔌 **[ChatbotAddonDemo](https://github.com/RelentlessOldMan/ChatbotAddonDemo)** — a reference demo of adding AI to a legacy Windows desktop tool (.NET/WPF): an opt-in chat assistant with approvals for anything that writes files or drives hardware, MCP access for coding agents via the console tool, and the customer paying for their own tokens, with diagrams and decision records explaining why.
 
