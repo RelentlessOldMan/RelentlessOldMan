@@ -22,7 +22,7 @@ Perform the following:
 2. Understand the existing testing architecture.
 3. Build the complete solution.
 4. Run the existing test suite and establish a clean baseline.
-5. Generate code coverage using appropriate C#/.NET coverage tooling.
+5. Generate code coverage using coverage tooling appropriate to the project's language(s).
 6. Measure at minimum:
    - Line coverage
    - Branch coverage
@@ -79,7 +79,8 @@ If a newly written test reveals what appears to be a production defect, investig
 
 Identify:
 
-- Solution files
+- Languages and build systems in use (a repo may have more than one)
+- Solution / workspace / build files
 - Production projects
 - Test projects
 - Shared test utilities
@@ -88,21 +89,18 @@ Identify:
 - Assertion libraries
 - Integration-test infrastructure
 - Existing coverage configuration
-- Existing `.runsettings` files
+- Existing coverage settings (e.g. `.runsettings`, `.coveragerc`, `jest.config`, `.nycrc`)
 - Existing CI coverage configuration
 
-Common .NET test frameworks include:
+Common test frameworks by language include:
 
-- xUnit
-- NUnit
-- MSTest
-
-Common supporting libraries may include:
-
-- Moq
-- NSubstitute
-- FakeItEasy
-- FluentAssertions
+- **C# / .NET:** xUnit, NUnit, MSTest (with Moq, NSubstitute, FakeItEasy, FluentAssertions)
+- **Python:** pytest, unittest (with `unittest.mock`, pytest-mock, Hypothesis)
+- **JavaScript / TypeScript:** Vitest, Jest, Mocha, Node's built-in `node:test`
+- **C / C++:** GoogleTest, Catch2, doctest, Unity / CMocka (embedded), CTest as runner
+- **Go:** the built-in `testing` package
+- **Rust:** built-in `#[test]` with `cargo test`
+- **Java / Kotlin:** JUnit, with Mockito
 
 Do not introduce another framework merely because you prefer it.
 
@@ -133,16 +131,21 @@ Do not attribute pre-existing failures to changes made during this review.
 
 # 5. Coverage Tooling
 
-For C#/.NET projects, prefer established free tooling such as:
+Use the established free coverage tooling for the project's language. If the project already collects coverage, use that. Otherwise, typical choices are:
 
-- Coverlet
-- `coverlet.collector`
-- `dotnet test --collect:"XPlat Code Coverage"`
-- ReportGenerator
+- **C# / .NET:** Coverlet (`coverlet.collector`, `dotnet test --collect:"XPlat Code Coverage"`), ReportGenerator for HTML
+- **Python:** coverage.py / pytest-cov (`pytest --cov --cov-branch`)
+- **JavaScript / TypeScript:** the runner's built-in coverage (`vitest --coverage`, `jest --coverage`) or c8 / nyc (Istanbul)
+- **C / C++:** gcov / gcovr or lcov (GCC, `--coverage`), or llvm-cov (Clang source-based coverage)
+- **Go:** `go test -coverprofile` with `go tool cover`
+- **Rust:** cargo-llvm-cov or cargo-tarpaulin
+- **Java / Kotlin:** JaCoCo
+
+Branch coverage is often off by default (e.g. coverage.py needs `--cov-branch`, gcovr needs `--branches`); turn it on.
 
 Prefer machine-readable coverage output such as:
 
-- Cobertura XML
+- Cobertura XML, LCOV, or JSON
 
 Generate human-readable HTML reports when useful for investigation.
 

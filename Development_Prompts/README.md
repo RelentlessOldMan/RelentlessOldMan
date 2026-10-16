@@ -22,7 +22,7 @@ does more harm than good: optimization, and soundness-critical tool logic.
 | [`CodeReview_Performance.md`](CodeReview_Performance.md) | A measure-first **performance, scalability & resource** pass — algorithmic complexity, UI responsiveness, allocations/leaks, caching, scale/stress testing, under realistic and worst-case workloads. |
 | [`CodeReview_WastedCPU.md`](CodeReview_WastedCPU.md) | *Audit-first.* An exhaustive **wasted-CPU** pass — redundant/repeated computation, algorithmic complexity, hot loops, data-structure overhead, lock contention and busy-waiting, idle/background polling, repeated parsing — with estimated savings per finding. |
 | [`CodeReview_WastedRAM.md`](CodeReview_WastedRAM.md) | *Audit-first.* An exhaustive **wasted-RAM** pass — over-long object lifetimes, duplicate data, oversized collections/buffers, unbounded caches, per-worker memory amplification, transient spikes — not just leaks. |
-| [`CodeReview_TestCoverage.md`](CodeReview_TestCoverage.md) | A **test-coverage analysis & remediation** pass (C#/.NET) — measure line/branch/method coverage, classify gaps by risk (MUST / SHOULD / OPTIONAL / intentionally uncovered / dead), add meaningful tests, chase the bugs they expose. Coverage is evidence, not the goal. |
+| [`CodeReview_TestCoverage.md`](CodeReview_TestCoverage.md) | A **test-coverage analysis & remediation** pass (any language) — measure line/branch/method coverage, classify gaps by risk (MUST / SHOULD / OPTIONAL / intentionally uncovered / dead), add meaningful tests, chase the bugs they expose. Coverage is evidence, not the goal. |
 | [`CodeReview_GitHubDocumentation.md`](CodeReview_GitHubDocumentation.md) | A **public GitHub documentation & presentation** pass — README architecture, GitHub Pages, install/quick-start, accuracy and drift audits, AI-slop audit, user-journey tests — while keeping the house no-contributions + MIT standards intact. |
 | [`CodeReview_UtilLibrary.md`](CodeReview_UtilLibrary.md) | A stricter-than-normal **reusable-library / common-code** pass — public API as a long-term contract, misuse-resistance, portability, thread-safety, dependency hygiene, security-sensitive helpers, plus a KEEP/IMPROVE/MERGE/SPLIT/MOVE/DEPRECATE/DELETE inventory. |
 | [`CodeReview_PuzzleGame.md`](CodeReview_PuzzleGame.md) | A specialized **puzzle-game logic / gameplay / state** pass — rule invariants, solvability & unique-solution validation, completion correctness, softlocks, undo/redo/restart/hints/save-resume, stale async results, and score/timer exploits. Supplements the general passes. |
@@ -129,7 +129,8 @@ Best for tools that hold big datasets or indexes in memory, or run for a long ti
 
 ## CodeReview_TestCoverage.md — test-coverage analysis & remediation
 
-Measures coverage (C#/.NET tooling) and then deliberately *doesn't* chase the number.
+Measures coverage with the language's standard tooling (Coverlet, coverage.py,
+Istanbul/c8, gcov/llvm-cov, `go test -cover`, …) and then deliberately *doesn't* chase the number.
 It builds a baseline, measures line/branch/method coverage, analyzes gaps by risk,
 inspects uncovered code and classifies it (MUST TEST / SHOULD TEST / OPTIONAL /
 INTENTIONALLY UNCOVERED / DEAD), checks behavioral coverage across normal, boundary,
@@ -139,7 +140,7 @@ over) any defect they expose. Strict safety rules: never weaken assertions, dele
 legitimate tests, or exclude hard code just to raise the percentage. Ends with a
 recalculated before/after report and the remaining justified gaps.
 
-Best for an existing .NET project that has tests and you want to know what they
+Best for an existing project that has tests and you want to know what they
 actually protect. (`Spec_Testing.md` is the one for standing a suite up from scratch.)
 
 ## CodeReview_GitHubDocumentation.md — public docs & presentation
