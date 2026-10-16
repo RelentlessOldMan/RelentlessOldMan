@@ -1286,6 +1286,17 @@ These are search targets, not automatic findings. Every suspected issue must be 
 
 All of the steps below belong to Phase 1 (audit). They are numbered as steps so they are not confused with the audit and fix phases; do not change code while performing them.
 
+### Before Step 1: Organize the audit
+
+- For a large codebase, split the audit by area (for example input, core algorithm, storage, output, interfaces), one auditor per area, so coverage does not overlap. Auditors are read-only: they never edit the repository, and each writes its findings to its own file.
+- Give every auditor the same short brief: its area, the safety rules in this specification, where to write its output, and the finding format in Section 23.
+- Give every finding a stable ID (for example an area prefix and a number) and keep it unchanged through Phase 2, commit messages, and later reviews.
+- Mark every finding **CONFIRMED**, with the exact reproducer or measurement (input, command, observed output), or **HYPOTHESIS**. Never fix a hypothesis blind; if it cannot be reproduced here, leave it as a hypothesis and say what would confirm it.
+- The lead merges the area findings into one ranked report, and re-checks every Critical and High finding against the code before ranking it.
+- Write the findings files and the merged report to a durable location (the repository's docs folder, or another fixed path the user agrees to), never a temporary or session folder, so they survive the session ending and context compactions.
+
+**Profile first.** Before the source review (Step 2), take one measured run of a representative workload that reports peak memory, retained memory, and allocation volume per phase or subsystem. Use it to aim the review and to rank findings: a finding's priority is the measured share of memory attributable to where it applies multiplied by the reduction expected there, not how bad the code looks. A finding in a phase that accounts for under about 5% of peak or retained memory on a realistic run is Low regardless of its complexity, and may be deferred with the measured share as the reason. If no run is possible, say so and label every ranking an estimate.
+
 ### Step 1: Architecture and memory inventory
 
 1. Map the application architecture.
@@ -1467,6 +1478,12 @@ For every finding, provide:
 
 **Validation plan:** Explain how to prove the optimization is correct and beneficial.
 
+**Change type:** What the recommended fix would change, judged from the code rather than impression: on-disk or saved format / public API / documented behavior / none. One or more may apply.
+
+**Observable output changes:** Anything a user or a downstream tool would see change even when results stay correct: ordering, counts, wording, output layout. Write "none" if there are none.
+
+**Expected memory removed:** The fraction of the targeted allocations or retained memory the recommended change should remove, and a cheap way to check that before building the full fix (for example, a temporary count of objects the new path would still create or retain). Note any copies or work the new design repeats per key, item, or group, which can cost more than it saves.
+
 **Dependencies:** Identify other findings or refactors that interact with this change.
 
 Do not present vague recommendations such as "use less memory" or "optimize the cache."
@@ -1512,6 +1529,13 @@ Provide a table containing:
 Order primarily by expected practical impact.
 
 Do not add overlapping savings estimates together without accounting for shared allocations and dependencies.
+
+End the ranked findings with a triage:
+
+- **Ship now:** the top one to three findings by measured value and risk. Phase 2 fixes, proves, and releases these first.
+- **Backlog:** the rest, in rank order, with a cut line — the point below which the expected saving (for example under a few percent of the run) does not justify the work. Findings below the cut line are deferred, not fixed.
+
+For each ship-now finding, name the cheapest proxy metric that shows whether a fix works (a count of items processed, filtered, allocated, or retained, not a full-run time) and the output-equivalence check that proves the fix changes no results.
 
 ### D. Detailed Findings
 
@@ -1592,6 +1616,12 @@ Written in Phase 2 (Section 29). For each finding ID:
 
 Also list every deferred or reverted finding with the reason, and anything discovered while fixing.
 
+Split the list into three groups and count them separately in any summary: **code fix**, **documentation only** (resolved by documenting the behavior rather than changing it), and **deferred**. Every deferred item carries the reviewer's recommendation, its estimated cost, and the decision needed from the user, not only the reason it was deferred.
+
+### L. Changes to Documented Behavior
+
+Written in Phase 2. List every change a user could notice: documented behavior, output ordering or format, public API, saved formats, defaults. For each, give the finding ID, what changed, and whether the user approved it. Write "none" if there are none.
+
 ---
 
 ## 25. Validation Requirements
@@ -1614,6 +1644,15 @@ Use identical workload inputs and comparable runtime conditions.
 Account for garbage collection, allocator warmup, operating system caching, and measurement noise.
 
 Repeat benchmarks where necessary.
+
+Benchmark protocol:
+
+- Build the original and the changed version from separate git worktrees into separate output directories, and print each build's version or hash in the benchmark output, so a run can never silently compare a build with itself.
+- Keep the built binary for every fix, so any two fixes can be compared later without rebuilding.
+- Alternate old and new runs (A, B, A, B, …) for at least four rounds instead of running each back to back, and report the minimum, median, and spread. On a shared machine, back-to-back runs drift.
+- Prefer allocation counts, object counts, and peak or retained bytes over wall-clock time alone; wall time on I/O-heavy workloads is often noise.
+- Include at least one small input, to expose start-up costs, and inputs shaped like each ranked finding, so every fixed finding is actually exercised.
+- Check that results are identical before and after (output bytes, or counts of items processed, kept, and dropped).
 
 A change should not be considered successful merely because it reduces allocation count.
 
@@ -1700,7 +1739,7 @@ Continue until:
 11. All findings have been prioritized.
 12. A final completeness pass has been performed.
 13. Remaining uncertainties have been explicitly documented.
-14. Phase 2: every confirmed finding fixed and verified, or deferred with a reason, and the Fixes Applied section written.
+14. Phase 2: the ship-now set fixed, verified, and released; the backlog fixed down to the cut line; every other finding reverted or deferred with a recommendation; and the Fixes Applied and Changes to Documented Behavior sections written.
 
 If tool, context, time, or repository access limitations prevent full coverage, identify exactly what remains rather than claiming completion.
 
@@ -1714,16 +1753,39 @@ Do not repeatedly rediscover previously analyzed findings. Revisit them only whe
 
 Only after the Phase 1 report is complete, fix the confirmed findings. Do not start fixing while still auditing — the complete, ranked list is what keeps effort on the highest-value problems instead of the first ones found.
 
-Work through the findings in priority order. For each fix:
+Work in this order:
+
+1. Fix, prove, and release the **ship-now** set from the triage first.
+2. Then work down the backlog in rank order to the cut line, releasing in batches. Defer everything below it.
+
+Close out each finding before starting the next: once it is proven, commit it, then move on. Do not start another finding while one is half-proven.
+
+For each fix:
 
 - Re-measure after the fix using the same baseline method as Phase 1 and record before/after numbers. If the measured gain is negligible or within noise, revert it and record that in the report.
 - Confirm behavior is unchanged: the existing tests pass, and add a test wherever the optimization touches logic that is not already covered.
 - Keep each fix small and focused; do not bundle unrelated changes.
-- Rebuild and re-run the tests after every fix, not just at the end.
+- Prove equivalence before claiming anything is faster or smaller: output byte-identical to the original build on the benchmark inputs (ignoring run IDs and timestamps), and for internal changes an old-versus-new comparison on randomized inputs with a fixed seed. Counts of items processed, kept, and dropped must match.
+- Iterate on the proxy metric named in the triage; time the full workload once the design works, not for every design iteration.
+- Write the test first and see it fail on the unfixed code; a test that passes either way proves nothing. Where practical, also confirm it fails again when the fix is deliberately broken.
+- Commit one finding (or one tightly coupled group) per commit, with the finding ID in the commit subject, so each fix can be reverted or bisected on its own. A commit is not a release: a release normally contains several finding commits.
+- Run the targeted tests for the change after each fix. Run the full suite after each batch of three or four fixes and always before pushing or releasing; if a batch fails, bisect within it.
+- After any scripted or bulk edit, run `git diff --stat` before building and check for surprises: 0-byte files, whole-file churn, line-ending or byte-order-mark changes.
+- For a fix that changes what is processed or how (a filter, a skip, a cache, a new order, parallelism), run one pass on real, representative data early, not only at the end. Some failures only appear on real data shapes.
+- Have each non-trivial fix reviewed independently (a second reviewer or a separate pass), aimed at the one way it could be wrong, for example whether a new skip can ever drop something that must be kept.
+- If a related coverage gap is cheap to test (minutes), write the test instead of listing the gap.
 
-Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the program's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
+Time-box surprises: if an unexpected result is worth chasing, spend at most about 30–45 minutes on it, then write up what was found and either add it as a new finding or defer it.
 
-When finished, update the report with the **Fixes Applied** section (Section 24, K): what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
+Keep the user informed: post one line when each fix lands and whenever a wait lasts longer than about five minutes, saying what is being waited on.
+
+If clean timing is not possible right now (the machine is busy, or a shared measurement slot is taken), keep fixing and testing, label those fixes "untimed", and time them together in the next clean window; batch timing into as few windows as possible. Never sit idle waiting for one. Once timed, revert any fix whose gain is negligible.
+
+Finish with one run on the real, full-size workload, after asking the user, and record the result in Fixes Applied.
+
+Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the program's documented behavior. Leave those in the report as recommendations, with the reason they were deferred, the reviewer's recommended option, and its cost, so the user can decide without another round trip. Decisions that change documented behavior, a saved format, or a public API belong to the user.
+
+When finished, update the report with the **Fixes Applied** section (Section 24, K) and the **Changes to Documented Behavior** section (L): what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
 
 ---
 

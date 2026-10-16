@@ -1237,6 +1237,8 @@ Disagreements should trigger investigation rather than automatic acceptance of e
 
 ## 22. Ground Truth and Test Oracles
 
+Every area of the pipeline needs at least one independent oracle or fuzz harness before its findings are fixed; reading the code is not enough. Use the oracles below, and fuzz with generated inputs at a scale of thousands of cases with a fixed seed so failures can be replayed.
+
 ### 22.1 Exact textual oracle
 
 For textual mode, verify that applying the edit script reconstructs the target input.
@@ -1362,6 +1364,15 @@ Ensure comparison does not execute target application code unless explicitly aut
 
 All of the steps below belong to Phase 1 (audit). They are numbered as steps so they are not confused with the audit and fix phases; do not change code while performing them.
 
+### Before Step 1: Organize the audit
+
+- For a large codebase, split the audit by area (for example input, core algorithm, storage, output, interfaces), one auditor per area, so coverage does not overlap. Auditors are read-only: they never edit the repository, and each writes its findings to its own file.
+- Give every auditor the same short brief: its area, the safety rules in this specification, where to write its output, and the finding format in Section 28.
+- Give every finding a stable ID (for example an area prefix and a number) and keep it unchanged through Phase 2, commit messages, and later reviews.
+- Mark every finding **CONFIRMED**, with the exact reproducer or measurement (input, command, observed output), or **HYPOTHESIS**. Never fix a hypothesis blind; if it cannot be reproduced here, leave it as a hypothesis and say what would confirm it.
+- The lead merges the area findings into one ranked report, and re-checks every Critical and High finding against the code before ranking it.
+- Write the findings files and the merged report to a durable location (the repository's docs folder, or another fixed path the user agrees to), never a temporary or session folder, so they survive the session ending and context compactions.
+
 ### Step 1: Contract and architecture
 
 1. Document supported comparison modes.
@@ -1372,6 +1383,8 @@ All of the steps below belong to Phase 1 (audit). They are numbered as steps so 
 6. Identify normalization rules.
 7. Identify failure-handling behavior.
 8. Inventory existing tests.
+
+Then map each section of this specification to what the tool actually claims to do. Mark sections that fall outside its contract as not applicable, with the reason, and list them in the coverage report. Do not just drop them: re-aim their intent at the claims the tool does make. For example, a tool that works on text rather than syntax trees still makes claims about C/C++ text — string and raw-string literals, line continuations, macro definitions whose spacing changes their meaning (`#define F(x)` versus `#define F (x)`), numeric literals, and encodings — and those are worth testing hard.
 
 ### Step 2: Input and textual correctness
 
@@ -1518,6 +1531,10 @@ For every finding, provide:
 
 **Regression test:** A test that should permanently detect recurrence.
 
+**Change type:** What the recommended fix would change, judged from the code rather than impression: on-disk or saved format / public API / documented behavior / none. One or more may apply.
+
+**Observable output changes:** Anything a user or a downstream tool would see change even when results stay correct: ordering, counts, wording, output layout. Write "none" if there are none.
+
 **Dependencies:** Related findings or prerequisite improvements.
 
 Clearly distinguish confirmed defects from unverified hypotheses.
@@ -1548,6 +1565,13 @@ Describe the complete comparison pipeline and major algorithms.
 |---|---|---|---|---|---|---|
 
 Prioritize missed changes and false equivalence before cosmetic precision improvements.
+
+End the ranked findings with a triage:
+
+- **Ship now:** the top one to three findings by severity and risk. Phase 2 fixes, proves, and releases these first.
+- **Backlog:** the rest, in rank order, with a cut line below which findings are deferred rather than fixed (for example Low or cosmetic ones).
+
+For each ship-now finding, name the reproducer and the oracle or fuzz check that will prove the fix.
 
 ### D. Detailed Findings
 
@@ -1602,6 +1626,12 @@ Written in Phase 2 (Section 32). For each finding ID:
 - The test-suite and ground-truth / oracle results after the fix.
 
 Also list every deferred finding with the reason, and anything discovered while fixing.
+
+Split the list into three groups and count them separately in any summary: **code fix**, **documentation only** (resolved by documenting the behavior rather than changing it), and **deferred**. Every deferred item carries the reviewer's recommendation, its estimated cost, and the decision needed from the user, not only the reason it was deferred.
+
+### P. Changes to Documented Behavior
+
+Written in Phase 2. List every change a user could notice: documented behavior, output ordering or format, public API, saved formats, defaults. For each, give the finding ID, what changed, and whether the user approved it. Write "none" if there are none.
 
 ---
 
@@ -1675,7 +1705,7 @@ The review is complete only when:
 20. Findings have been prioritized.
 21. A final adversarial completeness pass has been completed.
 22. Remaining limitations have been documented.
-23. Phase 2: every confirmed finding fixed and verified, or deferred with a reason, and the Fixes Applied section written.
+23. Phase 2: the ship-now set fixed, verified, and released; the backlog fixed down to the cut line; every other finding deferred with a recommendation; the project's ground-truth oracle re-run on its real corpus (with the user's approval); and the Fixes Applied and Changes to Documented Behavior sections written.
 
 If repository access, tooling, context, or execution limits prevent complete coverage, explicitly document what remains.
 
@@ -1689,16 +1719,35 @@ Do not repeatedly rediscover previously analyzed findings.
 
 Only after the Phase 1 report is complete, fix the confirmed findings. Do not start fixing while still auditing — the complete, ranked list is what keeps effort on the highest-value problems instead of the first ones found.
 
-Work through the findings in priority order. For each fix:
+Work in this order:
 
-- Turn the finding's minimal reproduction into a regression test first, confirm it fails, then make the fix and confirm it passes.
-- Run the full existing test suite and any ground-truth / oracle checks the project has. A fix that resolves one finding but changes results elsewhere is not done.
+1. Fix, prove, and release the **ship-now** set from the triage first.
+2. Then work down the backlog in rank order to the cut line, releasing in batches. Defer everything below it.
+
+Close out each finding before starting the next: once it is proven, commit it, then move on. Do not start another finding while one is half-proven.
+
+For each fix:
+
+- Turn the finding's minimal reproduction into a regression test first, confirm it fails, then make the fix and confirm it passes. Where practical, also confirm it fails again when the fix is deliberately broken.
+- Run the ground-truth / oracle checks the project has that cover the change (the full suite runs per batch, below). A fix that resolves one finding but changes results elsewhere is not done.
 - Keep each fix small and focused; do not bundle unrelated changes.
-- Rebuild and re-run the tests after every fix, not just at the end.
+- Build or reuse an independent oracle or fuzz harness for each area a fix touches (see Section 22), and run it before and after the fix. Oracles and fuzzing find the serious bugs that reading misses.
+- Commit one finding (or one tightly coupled group) per commit, with the finding ID in the commit subject, so each fix can be reverted or bisected on its own. A commit is not a release: a release normally contains several finding commits.
+- Run the targeted tests for the change after each fix. Run the full suite after each batch of three or four fixes and always before pushing or releasing; if a batch fails, bisect within it.
+- After any scripted or bulk edit, run `git diff --stat` before building and check for surprises: 0-byte files, whole-file churn, line-ending or byte-order-mark changes.
+- For a fix that changes what is processed or how (a filter, a skip, a cache, a new order, parallelism), run one pass on real, representative data early, not only at the end. Some failures only appear on real data shapes.
+- Have each non-trivial fix reviewed independently (a second reviewer or a separate pass), aimed at the one way it could be wrong, for example whether a new skip can ever drop something that must be kept.
+- If a related coverage gap is cheap to test (minutes), write the test instead of listing the gap.
 
-Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the tool's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
+Time-box surprises: if an unexpected result is worth chasing, spend at most about 30–45 minutes on it, then write up what was found and either add it as a new finding or defer it.
 
-When finished, update the report with the **Fixes Applied** section (Section 29, O): what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
+Keep the user informed: post one line when each fix lands and whenever a wait lasts longer than about five minutes, saying what is being waited on.
+
+Finish by re-running the project's ground-truth oracle on its real corpus against the fixed build. That run is usually large: ask the user first, then follow the project's rules for heavy work. Record the result in Fixes Applied.
+
+Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the tool's documented behavior. Leave those in the report as recommendations, with the reason they were deferred, the reviewer's recommended option, and its cost, so the user can decide without another round trip. Decisions that change documented behavior, a saved format, or a public API belong to the user.
+
+When finished, update the report with the **Fixes Applied** section (Section 29, O) and the **Changes to Documented Behavior** section (P): what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
 
 ---
 
