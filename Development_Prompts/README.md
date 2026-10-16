@@ -3,8 +3,10 @@
 Reusable prompts I paste (or point a Claude session at) when working on a project.
 Two kinds live here: **review & hardening passes** (`CodeReview*`) that hunt for and
 *actually fix* problems in existing code, and **implementation specs** (`Spec_*`) that
-build a new subsystem to a defined standard. All are opinionated and insist on real
-work over reports, while preserving the project's intended behavior and architecture.
+build a new subsystem to a defined standard. Most passes *fix what they find*; a few
+are **report-only audits** (marked below) that investigate exhaustively and hand back a
+prioritized, evidence-backed findings report without touching code. All are
+opinionated and preserve the project's intended behavior and architecture.
 
 ### Review & hardening passes
 
@@ -14,8 +16,19 @@ work over reports, while preserving the project's intended behavior and architec
 | [`CodeReview_UI.md`](CodeReview_UI.md) | A no-stone-unturned **UI/UX** hardening pass — state correctness, cancellation paths, control/visual consistency, resizing/DPI, focus/keyboard, error and empty states. |
 | [`CodeReview_Workflow.md`](CodeReview_Workflow.md) | An end-to-end **workflow & data-lifecycle** pass — import/edit/save/reopen/export, dirty-state correctness, save-failure safety, chained-cancellation, so the user never loses or corrupts work. |
 | [`CodeReview_Performance.md`](CodeReview_Performance.md) | A measure-first **performance, scalability & resource** pass — algorithmic complexity, UI responsiveness, allocations/leaks, caching, scale/stress testing, under realistic and worst-case workloads. |
+| [`CodeReview_Performance_Wasted_CPU.md`](CodeReview_Performance_Wasted_CPU.md) | *Report-only.* An exhaustive **wasted-CPU** audit — redundant/repeated computation, algorithmic complexity, hot loops, data-structure overhead, lock contention and busy-waiting, idle/background polling, repeated parsing — with estimated savings per finding. |
+| [`CodeReview_Performance_Wasted_RAM.md`](CodeReview_Performance_Wasted_RAM.md) | *Report-only.* An exhaustive **wasted-RAM** audit — over-long object lifetimes, duplicate data, oversized collections/buffers, unbounded caches, per-worker memory amplification, transient spikes — not just leaks. |
+| [`CodeReview_TestCoverage.md`](CodeReview_TestCoverage.md) | A **test-coverage analysis & remediation** pass (C#/.NET) — measure line/branch/method coverage, classify gaps by risk (MUST / SHOULD / OPTIONAL / intentionally uncovered / dead), add meaningful tests, chase the bugs they expose. Coverage is evidence, not the goal. |
+| [`CodeReview_GitHubDocumentation.md`](CodeReview_GitHubDocumentation.md) | A **public GitHub documentation & presentation** pass — README architecture, GitHub Pages, install/quick-start, accuracy and drift audits, AI-slop audit, user-journey tests — while keeping the house no-contributions + MIT standards intact. |
 | [`CodeReview_UtilLibrary.md`](CodeReview_UtilLibrary.md) | A stricter-than-normal **reusable-library / common-code** pass — public API as a long-term contract, misuse-resistance, portability, thread-safety, dependency hygiene, security-sensitive helpers, plus a KEEP/IMPROVE/MERGE/SPLIT/MOVE/DEPRECATE/DELETE inventory. |
 | [`CodeReview_PuzzleGame.md`](CodeReview_PuzzleGame.md) | A specialized **puzzle-game logic / gameplay / state** pass — rule invariants, solvability & unique-solution validation, completion correctness, softlocks, undo/redo/restart/hints/save-resume, stale async results, and score/timer exploits. Supplements the general passes. |
+
+### Tool-specific reviews
+
+| Prompt | Use it for |
+|--------|------------|
+| [`CodeReview_ToolSpecific_CodeCarving.md`](CodeReview_ToolSpecific_CodeCarving.md) | *Report-only.* An adversarial **C/C++ source-carving correctness** audit for [CodeCarver](https://github.com/RelentlessOldMan/CodeCarver) — the carving contract, soundness vs. precision, preprocessor/macros, C and C++ semantics (templates, overloads, virtual dispatch, object lifetime), and anything removed that was actually required. |
+| [`CodeReview_ToolSpecific_CodeDiffing.md`](CodeReview_ToolSpecific_CodeDiffing.md) | *Report-only.* An adversarial **C/C++ code-differ correctness** audit for [CodeDiffer](https://github.com/RelentlessOldMan/CodeDiffer) — the comparison contract, no missed / no fabricated differences, file pairing, diff-algorithm and hunk correctness, symbol identity and entity matching, templates and the C++ object model. |
 
 ### Implementation specs
 
@@ -78,6 +91,67 @@ Ends with a stress pass and before/after measurements.
 
 Best for anything that gets slow with large data, long sessions, or repeated operations.
 
+## CodeReview_Performance_Wasted_CPU.md — wasted-CPU audit
+
+A **report-only** companion to the performance pass, focused on computation that never
+needed to happen rather than merely slow code. It separates CPU metrics (latency,
+throughput, CPU time, idle CPU), establishes a baseline, then sweeps redundant and
+loop-invariant computation, duplicate work across components, algorithmic complexity
+(nested loops, repeated search/sort/traversal, incremental computation), hot paths and
+batching, container choice and cache locality, allocation/copying/GC-driven CPU,
+concurrency overhead (thread churn, contention, spin-waits, false sharing), idle and
+background activity (polling, timer proliferation, needless refreshes), and repeated
+parsing/serialization. Every finding comes with evidence, estimated savings, risk, and
+how to validate it. Emphasis on *multiplicative* waste — a cheap operation run a billion
+times — and on avoiding work before accelerating it.
+
+Best when a tool burns CPU at scale or while idle, and you want a prioritized hit list
+before changing anything.
+
+## CodeReview_Performance_Wasted_RAM.md — wasted-RAM audit
+
+The memory counterpart to the wasted-CPU audit, also **report-only**. It looks past
+classic leaks to memory that is reachable and correctly freed but still wasteful:
+objects kept alive too long, accidental/hidden retention, duplicate data and multiple
+representations, copy amplification, excess collection capacity and per-element
+overhead, large populations of small objects and layout/packing, repeated strings,
+oversized or simultaneously-live buffers, unbounded or low-value caches, per-thread and
+queued-work memory, and space complexity (full-state cloning). Covers both steady-state
+footprint and transient spikes, with estimated savings and risk per finding.
+
+Best for tools that hold big datasets or indexes in memory, or run for a long time.
+
+## CodeReview_TestCoverage.md — test-coverage analysis & remediation
+
+Measures coverage (C#/.NET tooling) and then deliberately *doesn't* chase the number.
+It builds a baseline, measures line/branch/method coverage, analyzes gaps by risk,
+inspects uncovered code and classifies it (MUST TEST / SHOULD TEST / OPTIONAL /
+INTENTIONALLY UNCOVERED / DEAD), checks behavioral coverage across normal, boundary,
+null/empty, invalid-input, exception, async, cancellation, retry, state-transition and
+cleanup scenarios, then adds the missing meaningful tests — investigating (not papering
+over) any defect they expose. Strict safety rules: never weaken assertions, delete
+legitimate tests, or exclude hard code just to raise the percentage. Ends with a
+recalculated before/after report and the remaining justified gaps.
+
+Best for an existing .NET project that has tests and you want to know what they
+actually protect. (`Spec_Testing.md` is the one for standing a suite up from scratch.)
+
+## CodeReview_GitHubDocumentation.md — public docs & presentation
+
+Treats the repo's GitHub presence (README, docs, GitHub Pages) as a product surface: a
+visitor should quickly learn what it is, why it exists, what it looks like, how to run
+it, and its limits. It reviews first impression, README architecture, information
+architecture and progressive disclosure, install/first-run and quick start, examples and
+screenshots, an accuracy audit against the actual code, documentation drift and
+duplication, navigation, troubleshooting, tone, and an **AI-slop audit** — then
+classifies each doc (KEEP / IMPROVE / MERGE / SPLIT / MOVE / GENERATE / ADD / DEPRECATE /
+DELETE) and makes the improvements, finishing with simulated user journeys (visitor →
+new user → forker). It's written for *personal projects shared as-is*: no corporate
+boilerplate or contributor recruitment, and the no-contributions policy and MIT license
+are protected house standards.
+
+Best before (or after a big change to) any public repo.
+
 ## CodeReview_UtilLibrary.md — reusable-library hardening
 
 A review held to a deliberately higher standard than a normal code review, because a
@@ -112,6 +186,32 @@ fuzzing, an invariant checker). The standard: the puzzle is hard because the *pu
 is hard, not because the software fights the player.
 
 Best for puzzle games — run it alongside the general passes, not instead of them.
+
+## CodeReview_ToolSpecific_CodeCarving.md — CodeCarver correctness audit
+
+A **report-only**, adversarial review written specifically for
+[CodeCarver](https://github.com/RelentlessOldMan/CodeCarver) (C/C++ reachability
+carving). It first pins down the carving contract, reachability categories, and the
+soundness-vs-precision trade-off, then audits the whole pipeline: AST/declaration
+identity and traversal completeness, preprocessor and conditional compilation (macros,
+macro-generated symbols, multiple build configs, include order), C semantics (function
+pointers, callback registration, global initialization, GNU extensions, volatile/MMIO,
+inline asm), C++ name resolution and overloading, templates and metaprogramming,
+classes/inheritance/virtual dispatch, and object lifetime — hunting for code removed
+that was required, code kept that was provably dead, invalid output, nondeterminism, and
+silent failures, each with a minimal reproduction and recommended fix.
+
+## CodeReview_ToolSpecific_CodeDiffing.md — CodeDiffer correctness audit
+
+The same treatment for [CodeDiffer](https://github.com/RelentlessOldMan/CodeDiffer),
+also **report-only**. It establishes the comparison contract (granularity, difference
+semantics, guarantees, change classifications) and the core properties — no missed
+differences, no fabricated differences, correct attribution and old/new direction, no
+silent success on incomplete analysis — then audits file discovery and pairing,
+encoding/line endings, textual diff and hunk correctness, C/C++ parsing, symbol identity
+and entity matching (overloads, renames, moves, ambiguous matches), templates, the C++
+object model, and preprocessor differences. An empty diff is never assumed to mean
+equivalent inputs.
 
 ## Spec_DiagnosticSystem.md — diagnostics/support system
 
@@ -166,7 +266,11 @@ Point a Claude Code session at the repo you want worked on, then paste the promp
 say "follow `Development_Prompts/CodeReview.md`"). Run them separately — each is a
 different job. For a GUI, project-based app, a good order for the review passes is:
 **code** first, then **workflow**, then **UI**, then **performance** (harden behavior
-before chasing speed). `CodeReview_UtilLibrary.md` is for **shared libraries** rather
+before chasing speed). The **report-only** audits (`*_Wasted_CPU`, `*_Wasted_RAM`, the
+`ToolSpecific` reviews) don't change code — run one, read the report, then decide what
+to fix (or hand the report back to a session to implement). `CodeReview_TestCoverage.md`
+fits after the code pass, and `CodeReview_GitHubDocumentation.md` is a good last step
+before sharing a repo. `CodeReview_UtilLibrary.md` is for **shared libraries** rather
 than apps — reach for it (in place of or alongside the code pass) when the project is a
 reusable tool belt. `CodeReview_PuzzleGame.md` is a **supplemental** pass for puzzle
 games — run it alongside the general passes. The `Spec_*` prompts are independent — run
