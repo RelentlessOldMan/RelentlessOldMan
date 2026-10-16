@@ -20,7 +20,7 @@ Perform the following:
 
 1. Discover all production projects and test projects.
 2. Understand the existing testing architecture.
-3. Build the complete solution.
+3. Build the complete project.
 4. Run the existing test suite and establish a clean baseline.
 5. Generate code coverage using coverage tooling appropriate to the project's language(s).
 6. Measure at minimum:
@@ -113,7 +113,7 @@ Follow the project's existing conventions unless there is a compelling reason no
 Before adding or changing tests:
 
 1. Restore dependencies.
-2. Build the solution.
+2. Build the project.
 3. Run the complete existing test suite.
 4. Record:
    - Number of tests
