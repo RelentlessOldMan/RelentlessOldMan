@@ -2,7 +2,7 @@
 
 ## 1. Mission
 
-Perform an exhaustive, adversarial, evidence-based review of the entire CodeDiffer implementation to identify every meaningful defect, weakness, ambiguity, or missed opportunity in how it detects, matches, classifies, represents, and reports differences between C and C++ source code.
+Perform an exhaustive, adversarial, evidence-based review of the entire code differ implementation to identify every meaningful defect, weakness, ambiguity, or missed opportunity in how it detects, matches, classifies, represents, and reports differences between C and C++ source code.
 
 The primary objective is to establish whether the tool **detects all changes within its declared comparison contract, reports them accurately, avoids false differences, and never silently discards or misattributes changes**.
 
@@ -16,7 +16,7 @@ Do not assume that a clean or empty diff means the inputs are equivalent.
 
 This review has two phases. **Phase 1 — audit:** do not modify code until the audit is complete; produce a comprehensive, prioritized report with exact code locations, concrete findings, minimal reproducers, root causes, recommended fixes, and regression tests. **Phase 2 — fix:** then fix the confirmed findings in priority order, with evidence for each (see the Phase 2 section near the end).
 
-**Safety:** use small corpora by default, and ask the user before any full-scale (~100 GB) compare or any compare against a network share. Point any results or output directory (`CODEDIFFER_RESULTS_DIR`) at a scratch folder, never inside a tree being compared. Run apply, merge, and other write operations only against scratch copies, never against real trees. Never delete or prune the user's saved results.
+**Safety:** use small corpora by default, and ask the user before any very large compare or any compare against a network share. Point any results or output directory at a scratch folder, never inside a tree being compared. Run apply, merge, and other write operations only against scratch copies, never against real trees. Never delete or prune the user's saved results.
 
 ---
 
