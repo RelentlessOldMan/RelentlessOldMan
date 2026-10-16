@@ -14,7 +14,7 @@ Review all relevant source code, algorithms, loops, data structures, synchroniza
 
 Be aggressive in identifying inefficiencies but conservative in recommending changes that could affect correctness.
 
-**Do not modify code during the review.** Produce a comprehensive, evidence-supported report containing concrete findings, estimated CPU savings, risk assessments, and validation recommendations.
+This review has two phases. **Phase 1 — audit:** do not modify code until the audit is complete; produce a comprehensive, evidence-supported report containing concrete findings, estimated CPU savings, risk assessments, and validation recommendations. **Phase 2 — fix:** then fix the confirmed findings in priority order, with evidence for each (see the Phase 2 section near the end).
 
 ---
 
@@ -1868,7 +1868,7 @@ The review must be:
 
 **Architecture-aware:** Investigate cross-component inefficiencies.
 
-**Non-destructive:** Do not modify source code.
+**Audit before fixing:** Do not change code until the Phase 1 report is complete.
 
 **Prioritized:** Focus on the greatest achievable improvements.
 
@@ -1910,7 +1910,24 @@ Do not repeatedly rediscover previously analyzed findings.
 
 ---
 
-# 30. Final Instruction
+# 30. Phase 2 — Fix What the Audit Found
+
+Only after the Phase 1 report is complete, fix the confirmed findings. Do not start fixing while still auditing — the complete, ranked list is what keeps effort on the highest-value problems instead of the first ones found.
+
+Work through the findings in priority order. For each fix:
+
+- Re-measure after the fix using the same baseline method as Phase 1 and record before/after numbers. If the measured gain is negligible or within noise, revert it and record that in the report.
+- Confirm behavior is unchanged: the existing tests pass, and add a test wherever the optimization touches logic that is not already covered.
+- Keep each fix small and focused; do not bundle unrelated changes.
+- Rebuild and re-run the tests after every fix, not just at the end.
+
+Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the program's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
+
+When finished, update the report with a **Fixes Applied** section: what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
+
+---
+
+# 31. Final Instruction
 
 **Find wasted CPU, not merely slow code.**
 
@@ -1936,6 +1953,6 @@ Prefer:
 - Reduced synchronization over increasingly complex locking.
 - Evidence-based optimization over speculative changes.
 
-The final deliverable must be a comprehensive, evidence-supported, prioritized CPU optimization report containing concrete findings, estimated benefits, and actionable recommendations.
+The final deliverable must be the fixes applied in Phase 2 plus a comprehensive, evidence-supported, prioritized CPU optimization report containing concrete findings, estimated benefits, and actionable recommendations.
 
-**Do not implement fixes. Do not stop at obvious bottlenecks. Do not declare the review complete until the coverage and completeness requirements have been satisfied or remaining limitations have been explicitly documented.**
+**Do not start fixing until the audit is complete, and do not fix what you cannot verify. Do not stop at obvious bottlenecks. Do not declare the review complete until the coverage and completeness requirements have been satisfied or remaining limitations have been explicitly documented.**

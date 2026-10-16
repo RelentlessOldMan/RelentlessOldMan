@@ -14,7 +14,7 @@ The tool must not merely produce plausible-looking differences. Its results must
 
 Do not assume that a clean or empty diff means the inputs are equivalent.
 
-**Do not modify the implementation during this review.** Produce a comprehensive, prioritized report with exact code locations, concrete findings, minimal reproducers, root causes, recommended fixes, and regression tests.
+This review has two phases. **Phase 1 — audit:** do not modify code until the audit is complete; produce a comprehensive, prioritized report with exact code locations, concrete findings, minimal reproducers, root causes, recommended fixes, and regression tests. **Phase 2 — fix:** then fix the confirmed findings in priority order, with evidence for each (see the Phase 2 section near the end).
 
 ---
 
@@ -1670,7 +1670,24 @@ Do not repeatedly rediscover previously analyzed findings.
 
 ---
 
-# 32. Final Instruction
+# 32. Phase 2 — Fix What the Audit Found
+
+Only after the Phase 1 report is complete, fix the confirmed findings. Do not start fixing while still auditing — the complete, ranked list is what keeps effort on the highest-value problems instead of the first ones found.
+
+Work through the findings in priority order. For each fix:
+
+- Turn the finding's minimal reproduction into a regression test first, confirm it fails, then make the fix and confirm it passes.
+- Run the full existing test suite and any ground-truth / oracle checks the project has. A fix that resolves one finding but changes results elsewhere is not done.
+- Keep each fix small and focused; do not bundle unrelated changes.
+- Rebuild and re-run the tests after every fix, not just at the end.
+
+Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the tool's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
+
+When finished, update the report with a **Fixes Applied** section: what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
+
+---
+
+# 33. Final Instruction
 
 **Find incorrect differences, missing differences, incorrect matches, and unjustified claims of equivalence.**
 
@@ -1694,6 +1711,6 @@ Construct adversarial old/new source pairs designed specifically to defeat the i
 
 For every important language feature, test both whether genuine changes are detected and whether irrelevant differences are correctly handled.
 
-The final deliverable must be a comprehensive, evidence-supported, prioritized report containing reproducible defects, architectural weaknesses, missing test coverage, and concrete recommendations.
+The final deliverable must be the fixes applied in Phase 2 plus a comprehensive, evidence-supported, prioritized report containing reproducible defects, architectural weaknesses, missing test coverage, and concrete recommendations.
 
-**Do not implement fixes. Do not stop after finding obvious issues. Do not declare the review complete until the required coverage has been achieved or all remaining limitations have been explicitly documented.**
+**Do not start fixing until the audit is complete, and do not fix what you cannot verify. Do not stop after finding obvious issues. Do not declare the review complete until the required coverage has been achieved or all remaining limitations have been explicitly documented.**
