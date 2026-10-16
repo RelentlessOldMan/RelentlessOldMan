@@ -38,12 +38,15 @@ The desired style is:
 - honest about limitations
 - written for actual users
 
+Never add:
+
+- contributor recruitment
+- governance language
+
 Avoid unnecessary:
 
 - marketing language
 - corporate mission statements
-- contributor recruitment
-- governance language
 - maintainer hierarchies
 - community-building boilerplate
 - exaggerated claims
@@ -61,19 +64,42 @@ The documentation should feel like a competent developer showing someone a usefu
 
 Do not redesign the contribution policy.
 
-The intended policy is essentially:
+The policy is fixed:
 
-- this is a personal project
-- contributions are not being solicited
+- this is a personal tool, published as-is
+- issues and pull requests are not accepted (issues are disabled and PRs auto-close)
 - users are welcome to fork it and make it their own
 
-Existing wording can be corrected or clarified if necessary, but do not transform the repository into a contribution-driven community project.
+The README must contain a Contributing section with exactly this text (add it if missing):
+
+```text
+This is a personal tool, published as-is — **issues and pull requests aren't accepted** (PRs auto-close). Fork it and make it your own. <emoji>
+```
+
+`<emoji>` is the project's own signature emoji; keep whichever one the project already uses.
+
+Never:
+
+- add `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, issue templates, pull request templates, or `FUNDING.yml`
+- enable or point readers to GitHub Discussions
+- use "good first issue", "help wanted", or similar recruitment wording
+- tell readers to open an issue, file a bug, or submit a pull request
+
+Leave the `.github/workflows/close-prs.yml` auto-close workflow alone.
+
+Only fix typos in the Contributing section. Do not reword it, soften it, or transform the repository into a contribution-driven community project.
 
 ## LICENSE
 
-The intended license is MIT.
+The license is MIT, in a `LICENSE` file at the repository root.
 
-Do not recommend changing it unless there is an actual repository-specific legal or consistency problem that needs to be surfaced.
+The README License section must read:
+
+```text
+MIT — see [LICENSE](LICENSE). © <year> RelentlessOldMan.
+```
+
+Do not recommend changing the license unless there is an actual repository-specific legal or consistency problem that needs to be surfaced.
 
 Do not spend review effort debating licensing philosophy.
 
@@ -371,9 +397,11 @@ If finished releases/binaries exist, ordinary users generally should not encount
 
 ```text
 git clone
-dotnet restore
-dotnet build
+<install dependencies>
+<build from source>
 ```
+
+(e.g. `dotnet build`, `npm install && npm run build`, `pip install -e .`, `cargo build`)
 
 before being told they can simply download a release.
 
@@ -638,7 +666,7 @@ Examples include:
 
 Do not create an enormous speculative troubleshooting encyclopedia.
 
-Document failures that are realistically likely or evident from the implementation/issues/tests.
+Document failures that are realistically likely or evident from the implementation, tests, or commit history. (GitHub issues are disabled, so there is no issue tracker to mine.)
 
 Where the application produces useful error messages, documentation should complement rather than repeat them.
 
@@ -819,6 +847,10 @@ Badges should communicate useful information.
 
 Do not create a NASCAR hood of badges.
 
+The repository description, website link, and topics are GitHub settings, not repository files. Recommend changes to them in the final report; do not apply them with `gh` or the GitHub API.
+
+Never push, publish, create releases, or change repository settings as part of this review.
+
 ---
 
 # 24. Related Projects
@@ -904,39 +936,39 @@ Use failures in these journeys to drive documentation improvements.
 
 For every significant documentation artifact or major section reviewed, classify it when useful as:
 
-### KEEP
+## KEEP
 
 Correct, useful, appropriately located, and appropriately detailed.
 
-### IMPROVE
+## IMPROVE
 
 Fundamentally useful but needs rewriting, clarification, updating, formatting, or expansion.
 
-### MERGE
+## MERGE
 
 Useful information duplicated across multiple locations that should have one authoritative home.
 
-### SPLIT
+## SPLIT
 
 A document or section is trying to serve incompatible audiences or has become too large.
 
-### MOVE
+## MOVE
 
 Useful content exists but belongs somewhere else in the documentation hierarchy.
 
-### GENERATE
+## GENERATE
 
 Useful information should be generated automatically rather than manually maintained.
 
-### ADD
+## ADD
 
 Important documentation is missing.
 
-### DEPRECATE
+## DEPRECATE
 
 Material is retained temporarily but should no longer be considered authoritative.
 
-### DELETE
+## DELETE
 
 Content is obsolete, redundant, misleading, useless, or actively makes the documentation worse.
 
@@ -962,7 +994,7 @@ After understanding the project:
 8. Fix navigation.
 9. Fix broken links.
 10. Verify examples.
-11. Verify GitHub Pages still builds correctly.
+11. Verify GitHub Pages still builds correctly — locally only (e.g. `bundle exec jekyll build`, `mkdocs build`); never push or trigger a deployment to check it.
 12. Verify the resulting documentation against the implementation.
 
 Preserve useful existing work.

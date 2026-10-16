@@ -26,7 +26,23 @@ Measure, reason, identify meaningful problems, and fix them.
 
 ---
 
-# 1. FIRST UNDERSTAND THE PERFORMANCE MODEL
+## TEST SAFELY
+
+Scale, stress, memory-pressure, long-running, and failure tests can damage data or overwhelm the machine if run carelessly.
+
+Run them ONLY against copies or generated data in a temporary/scratch directory. Never point load, import, save, or failure tests at the user's real documents or projects.
+
+Before fresh-start or persisted-state tests, back up the application's settings/config location or redirect it to a scratch location, and restore it afterward.
+
+Undo any permission, read-only, or simulated-failure changes you make.
+
+Keep stress and resource-exhaustion tests bounded in size and duration. Check free disk space before generating large inputs, cap memory-pressure tests well below what would make the machine swap heavily or become unresponsive, and stop any runaway test rather than letting it run to exhaustion.
+
+Delete generated test data, large inputs, and temporary files when you finish.
+
+---
+
+## 1. FIRST UNDERSTAND THE PERFORMANCE MODEL
 
 Before making changes, understand what the application actually does.
 
@@ -68,7 +84,7 @@ Prioritize things users can actually experience or workloads that can realistica
 
 ---
 
-# 2. ESTABLISH A BASELINE
+## 2. ESTABLISH A BASELINE
 
 Where practical, measure important operations BEFORE changing them.
 
@@ -94,7 +110,7 @@ Do not claim a performance improvement merely because code "looks faster."
 
 ---
 
-# 3. USE PROFILING TOOLS
+## 3. USE PROFILING TOOLS
 
 Use appropriate profiling tools available for the project's technology and environment.
 
@@ -120,7 +136,7 @@ Do not optimize based entirely on intuition when measurement is reasonably possi
 
 ---
 
-# 4. ALGORITHMIC COMPLEXITY
+## 4. ALGORITHMIC COMPLEXITY
 
 Look aggressively for operations whose complexity grows poorly with input size.
 
@@ -150,7 +166,7 @@ An inefficient operation that is harmless for 10 items may become disastrous for
 
 ---
 
-# 5. SCALE TESTING
+## 5. SCALE TESTING
 
 Test realistic workload sizes AND deliberately larger workloads.
 
@@ -179,7 +195,7 @@ Look for sudden cliffs rather than only gradual degradation.
 
 ---
 
-# 6. UI RESPONSIVENESS
+## 6. UI RESPONSIVENESS
 
 For GUI applications, the UI must remain responsive.
 
@@ -214,7 +230,7 @@ Do NOT introduce unnecessary concurrency merely to make code look sophisticated.
 
 ---
 
-# 7. UI EVENT STORMS
+## 7. UI EVENT STORMS
 
 Look for expensive work triggered excessively by UI events.
 
@@ -253,7 +269,7 @@ where doing so materially improves behavior.
 
 ---
 
-# 8. REDUNDANT WORK
+## 8. REDUNDANT WORK
 
 Search for work being repeated unnecessarily.
 
@@ -276,7 +292,7 @@ Ask:
 
 ---
 
-# 9. ALLOCATIONS
+## 9. ALLOCATIONS
 
 Profile or inspect allocation-heavy paths.
 
@@ -303,17 +319,19 @@ Focus on allocations that materially affect:
 
 ---
 
-# 10. MEMORY USAGE
+## 10. MEMORY USAGE
 
 Observe memory behavior during realistic use.
 
 Test:
 
+```text
 Startup
 → load
 → edit
 → save
 → close project
+```
 
 Then repeat.
 
@@ -335,12 +353,13 @@ Look for:
 
 ---
 
-# 11. LONG-RUNNING MEMORY TEST
+## 11. LONG-RUNNING MEMORY TEST
 
 Run repeated workflows many times.
 
 Examples:
 
+```text
 Open → Close
 Open → Close
 Open → Close
@@ -353,6 +372,7 @@ Open dialog → Close dialog
 Load project → unload project
 
 Generate preview repeatedly
+```
 
 Perform the operation dozens or hundreds of times where practical.
 
@@ -362,7 +382,7 @@ Do not assume garbage collection will eventually fix genuine object-retention pr
 
 ---
 
-# 12. RESOURCE LEAKS
+## 12. RESOURCE LEAKS
 
 Look beyond managed memory.
 
@@ -388,7 +408,7 @@ Repeated operations should not continuously increase OS resource usage.
 
 ---
 
-# 13. FILE I/O
+## 13. FILE I/O
 
 Review disk access.
 
@@ -418,7 +438,7 @@ Correct and atomic persistence is more important than shaving milliseconds from 
 
 ---
 
-# 14. SERIALIZATION / DESERIALIZATION
+## 14. SERIALIZATION / DESERIALIZATION
 
 Profile persistence operations.
 
@@ -436,7 +456,7 @@ Make sure optimization does not compromise correctness or compatibility.
 
 ---
 
-# 15. IMAGE / MEDIA PROCESSING
+## 15. IMAGE / MEDIA PROCESSING
 
 If the application handles images, audio, video, thumbnails, previews, or other media, inspect these paths carefully.
 
@@ -455,7 +475,7 @@ Use appropriately sized representations for previews rather than full-resolution
 
 ---
 
-# 16. RENDERING PERFORMANCE
+## 16. RENDERING PERFORMANCE
 
 For GUI applications, inspect rendering behavior.
 
@@ -478,7 +498,7 @@ A UI that performs well with five items may become unusable with five thousand.
 
 ---
 
-# 17. LARGE COLLECTION UI
+## 17. LARGE COLLECTION UI
 
 If displaying large lists/tables/trees/grids:
 
@@ -497,7 +517,7 @@ Do not create thousands of heavyweight UI controls when the framework provides v
 
 ---
 
-# 18. SEARCH / FILTERING
+## 18. SEARCH / FILTERING
 
 Test search and filtering with large datasets.
 
@@ -517,7 +537,7 @@ Keep behavior responsive.
 
 ---
 
-# 19. CACHING
+## 19. CACHING
 
 Review existing caches.
 
@@ -540,7 +560,7 @@ Only cache when there is a meaningful benefit.
 
 ---
 
-# 20. UNBOUNDED GROWTH
+## 20. UNBOUNDED GROWTH
 
 Search aggressively for structures that can grow indefinitely.
 
@@ -565,7 +585,7 @@ Introduce reasonable limits where appropriate.
 
 ---
 
-# 21. BACKGROUND WORK
+## 21. BACKGROUND WORK
 
 Review background tasks/threads/workers.
 
@@ -588,7 +608,7 @@ Likewise, avoid serializing independent expensive work unnecessarily when safe p
 
 ---
 
-# 22. STALE ASYNC WORK
+## 22. STALE ASYNC WORK
 
 This is particularly important in interactive applications.
 
@@ -619,7 +639,7 @@ Performance optimizations must not create correctness bugs.
 
 ---
 
-# 23. CANCELLATION PERFORMANCE
+## 23. CANCELLATION PERFORMANCE
 
 Cancellation should actually stop expensive work where practical.
 
@@ -636,7 +656,7 @@ Ensure cancellation cleanup is efficient.
 
 ---
 
-# 24. LOCK CONTENTION
+## 24. LOCK CONTENTION
 
 For multithreaded applications, inspect locks and synchronization.
 
@@ -657,7 +677,7 @@ Do not replace correct synchronization with unsafe lock-free code merely for the
 
 ---
 
-# 25. DEADLOCK / STARVATION RISKS
+## 25. DEADLOCK / STARVATION RISKS
 
 Although primarily correctness issues, these are also catastrophic performance failures.
 
@@ -674,7 +694,7 @@ Stress these paths.
 
 ---
 
-# 26. NETWORK PERFORMANCE
+## 26. NETWORK PERFORMANCE
 
 If applicable, review:
 
@@ -697,7 +717,7 @@ Do not implement aggressive retries that make an outage worse.
 
 ---
 
-# 27. DATABASE PERFORMANCE
+## 27. DATABASE PERFORMANCE
 
 If applicable, inspect:
 
@@ -716,7 +736,7 @@ Use actual query profiling where practical.
 
 ---
 
-# 28. EXTERNAL PROCESSES
+## 28. EXTERNAL PROCESSES
 
 If the application launches external programs/tools:
 
@@ -736,7 +756,7 @@ If an external process is expensive to launch repeatedly, determine whether batc
 
 ---
 
-# 29. STARTUP PERFORMANCE
+## 29. STARTUP PERFORMANCE
 
 Profile startup.
 
@@ -759,7 +779,7 @@ The application should become usable as quickly as reasonably possible.
 
 ---
 
-# 30. SHUTDOWN PERFORMANCE
+## 30. SHUTDOWN PERFORMANCE
 
 Shutdown should not hang.
 
@@ -781,17 +801,19 @@ But do not let broken background work hang the application forever either.
 
 ---
 
-# 31. REPEATED WORKFLOW TESTING
+## 31. REPEATED WORKFLOW TESTING
 
 Perform major workflows repeatedly.
 
 For example:
 
+```text
 Import
 → edit
 → save
 → export
 → close
+```
 
 Repeat 50 or 100 times where practical.
 
@@ -808,7 +830,7 @@ Look for cumulative degradation.
 
 ---
 
-# 32. LONG-RUNNING SESSION TEST
+## 32. LONG-RUNNING SESSION TEST
 
 Where practical, simulate or perform an extended session.
 
@@ -837,7 +859,7 @@ Look for slow accumulation.
 
 ---
 
-# 33. IDLE RESOURCE USAGE
+## 33. IDLE RESOURCE USAGE
 
 Leave the application idle.
 
@@ -857,7 +879,7 @@ An idle application should generally be idle.
 
 ---
 
-# 34. POLLING
+## 34. POLLING
 
 Review polling loops.
 
@@ -874,7 +896,7 @@ Avoid millisecond-frequency polling for events that happen once every few minute
 
 ---
 
-# 35. TIMERS
+## 35. TIMERS
 
 Audit timers.
 
@@ -890,7 +912,7 @@ Look for:
 
 ---
 
-# 36. LOGGING PERFORMANCE
+## 36. LOGGING PERFORMANCE
 
 Logging should aid diagnostics without becoming a performance problem.
 
@@ -911,7 +933,7 @@ Do NOT solve logging performance by eliminating information needed to diagnose f
 
 ---
 
-# 37. PROGRESS REPORTING
+## 37. PROGRESS REPORTING
 
 Progress updates themselves can become expensive.
 
@@ -923,7 +945,7 @@ The user does not need every iteration rendered.
 
 ---
 
-# 38. SAVE PERFORMANCE
+## 38. SAVE PERFORMANCE
 
 Measure Save.
 
@@ -948,7 +970,7 @@ for minor save-speed improvements.
 
 ---
 
-# 39. IMPORT PERFORMANCE
+## 39. IMPORT PERFORMANCE
 
 Measure imports across representative input sizes.
 
@@ -967,7 +989,7 @@ Avoid creating thousands of UI objects one-by-one if batching/virtualization is 
 
 ---
 
-# 40. EXPORT PERFORMANCE
+## 40. EXPORT PERFORMANCE
 
 Measure exports.
 
@@ -984,7 +1006,7 @@ Again, correctness comes first.
 
 ---
 
-# 41. TEMPORARY FILES
+## 41. TEMPORARY FILES
 
 Audit temporary-file usage.
 
@@ -1000,7 +1022,7 @@ Test failure/cancellation paths too.
 
 ---
 
-# 42. MEMORY PRESSURE
+## 42. MEMORY PRESSURE
 
 Test behavior when processing data significantly larger than normal.
 
@@ -1019,7 +1041,7 @@ Do not blindly load an entire multi-gigabyte resource when only a small portion 
 
 ---
 
-# 43. BACKPRESSURE
+## 43. BACKPRESSURE
 
 If producers can generate work faster than consumers can process it, ensure queues do not grow indefinitely.
 
@@ -1036,7 +1058,7 @@ Use bounded queues/backpressure where appropriate.
 
 ---
 
-# 44. DUPLICATE REQUEST SUPPRESSION
+## 44. DUPLICATE REQUEST SUPPRESSION
 
 Look for scenarios where the same expensive operation can be requested repeatedly.
 
@@ -1059,7 +1081,7 @@ Where appropriate:
 
 ---
 
-# 45. FAILURE PERFORMANCE
+## 45. FAILURE PERFORMANCE
 
 Failures can create performance problems too.
 
@@ -1088,7 +1110,7 @@ Failure behavior must remain bounded.
 
 ---
 
-# 46. SLOW DEPENDENCY SIMULATION
+## 46. SLOW DEPENDENCY SIMULATION
 
 Where practical, simulate slow:
 
@@ -1105,7 +1127,7 @@ Timeouts and cancellation should be appropriate.
 
 ---
 
-# 47. LOWER-END MACHINE THINKING
+## 47. LOWER-END MACHINE THINKING
 
 Do not optimize solely for the development machine.
 
@@ -1123,7 +1145,7 @@ Avoid designing performance assumptions around a high-end developer workstation.
 
 ---
 
-# 48. DEBUG VS RELEASE
+## 48. DEBUG VS RELEASE
 
 Perform meaningful performance testing using an optimized/release build where applicable.
 
@@ -1133,7 +1155,7 @@ However, development/debug mode should not be so catastrophically slow that norm
 
 ---
 
-# 49. PERFORMANCE REGRESSION TESTS
+## 49. PERFORMANCE REGRESSION TESTS
 
 For important performance-sensitive operations, consider adding lightweight benchmarks or regression tests.
 
@@ -1151,7 +1173,7 @@ Prefer:
 
 ---
 
-# 50. BEFORE/AFTER VALIDATION
+## 50. BEFORE/AFTER VALIDATION
 
 For meaningful optimizations:
 
@@ -1169,7 +1191,7 @@ Performance improvements should justify their maintenance cost.
 
 ---
 
-# 51. DO NOT SACRIFICE CORRECTNESS
+## 51. DO NOT SACRIFICE CORRECTNESS
 
 Never trade correctness for speed without explicit justification.
 
@@ -1188,7 +1210,7 @@ A fast wrong answer is still wrong.
 
 ---
 
-# 52. DO NOT MICRO-OPTIMIZE RANDOM CODE
+## 52. DO NOT MICRO-OPTIMIZE RANDOM CODE
 
 Avoid pointless changes such as:
 
@@ -1213,7 +1235,7 @@ Prioritize:
 
 ---
 
-# 53. PROFILE AGAIN AFTER CHANGES
+## 53. PROFILE AGAIN AFTER CHANGES
 
 After the main optimization pass, profile again.
 
@@ -1233,7 +1255,7 @@ Continue until remaining costs are reasonable for the application's purpose.
 
 ---
 
-# 54. REVIEW YOUR OWN OPTIMIZATIONS
+## 54. REVIEW YOUR OWN OPTIMIZATIONS
 
 Performance changes frequently introduce subtle bugs.
 
@@ -1254,7 +1276,7 @@ Run the normal functional tests after performance changes.
 
 ---
 
-# 55. FINAL STRESS PASS
+## 55. FINAL STRESS PASS
 
 When you believe the performance work is complete, deliberately stress the application again.
 
@@ -1284,7 +1306,7 @@ Do not stop at "it feels fast."
 
 ---
 
-# 56. FINAL VERIFICATION
+## 56. FINAL VERIFICATION
 
 Before declaring completion:
 
@@ -1306,7 +1328,7 @@ Before declaring completion:
 
 ---
 
-# FINAL REPORT
+## FINAL REPORT
 
 After completing the work, provide a concise report containing:
 

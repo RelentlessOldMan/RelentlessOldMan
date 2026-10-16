@@ -38,6 +38,10 @@ Do not turn simple helpers into enterprise architecture.
 
 Improve things when there is a concrete correctness, usability, maintainability, portability, safety, performance, or API-design reason.
 
+Rebuild and run the tests after each meaningful change, not only at the final test pass (Section 165).
+
+Never break consumers silently: see the breaking-change guardrail in Section 78 before removing, renaming, moving, or changing any public API.
+
 ---
 
 # 1. FIRST UNDERSTAND THE LIBRARY
@@ -139,6 +143,8 @@ Do not classify merely for the sake of classification.
 
 Use the classification to expose architectural entropy.
 
+Acting on MERGE, SPLIT, MOVE, DEPRECATE, or DELETE for a public API is subject to the breaking-change guardrail in Section 78. Where it cannot be satisfied, record the classification as a recommendation instead of carrying it out.
+
 Produce a final classification summary.
 
 ---
@@ -200,7 +206,7 @@ A method can be perfectly implemented and still have a bad API.
 
 Look for APIs like:
 
-DoThing(value, true, false, true)
+`DoThing(value, true, false, true)`
 
 This is difficult to understand at call sites.
 
@@ -317,7 +323,7 @@ Where the language/framework commonly uses Try-style APIs, review consistency.
 
 A method named conceptually:
 
-TryParse...
+`TryParse...`
 
 should normally:
 
@@ -447,7 +453,7 @@ The API should not look like a harmless query while secretly doing substantial w
 
 A method named:
 
-GetSomething()
+`GetSomething()`
 
 should not unexpectedly modify global state.
 
@@ -549,7 +555,7 @@ Review numeric APIs for ambiguous units.
 
 Bad:
 
-timeout = 5000
+`timeout = 5000`
 
 Is that:
 
@@ -934,9 +940,9 @@ Do not expose asynchronous behavior through misleading synchronous APIs.
 
 Search for patterns conceptually equivalent to:
 
-.Wait()
+`.Wait()`
 
-.Result
+`.Result`
 
 blocking async operations synchronously.
 
@@ -1016,13 +1022,12 @@ Allow callers appropriate control where warranted.
 
 A general-purpose library should normally avoid assuming:
 
-- WinForms UI thread
-- WPF dispatcher
-- MAUI synchronization context
-- ASP.NET context
-- Specific message loop
+- A particular UI framework's UI thread or dispatcher (e.g. WinForms/WPF/MAUI, Qt, a browser main thread)
+- A main-loop or event-loop context (e.g. a GUI message loop, an asyncio or Node.js event loop)
+- A web-framework request context (e.g. ASP.NET)
+- A captured synchronization context of any kind
 
-Core reusable utilities should not unexpectedly marshal to UI threads.
+Core reusable utilities should not unexpectedly marshal to UI threads or a main loop.
 
 Keep UI-specific adapters separate.
 
@@ -1299,10 +1304,9 @@ Examples:
 
 Core string/file utilities should not need:
 
-- WinForms
-- WPF
-- ASP.NET
-- MAUI
+- UI frameworks (e.g. WinForms/WPF/MAUI, Qt, GTK, a browser DOM)
+- Web/application frameworks (e.g. ASP.NET, Django, Express, Spring)
+- A UI-thread or main-loop context
 
 unless the utility is explicitly framework-specific.
 
@@ -1547,6 +1551,8 @@ Determine:
 - Is deprecation preferable?
 
 Do not treat a utility library like isolated application code.
+
+**Breaking-change guardrail:** Do not remove, rename, move, or change the signature or default behavior of a public API unless every consumer has been found and updated in this session. If any consumer cannot be found, reached, or updated, prefer an additive change (a new overload, method, or type alongside the old one) or a deprecating change (Section 79) instead, or record the change as a recommendation for the user. This applies to every MERGE, SPLIT, MOVE, DEPRECATE, and DELETE action and to every "remove when safe" cleanup.
 
 ---
 
@@ -1930,6 +1936,8 @@ Pretend you are a developer who:
 
 Create small representative consumer programs/tests.
 
+Create throwaway consumers in a temporary directory outside the repository and delete them when done. Keep only the ones worth turning into real contract tests, and move those into the library's test project.
+
 Attempt common tasks using ONLY the public contract.
 
 Ask:
@@ -1942,7 +1950,7 @@ Ask:
 - Do I understand failures?
 - Can I misuse this accidentally?
 - Do I need implementation knowledge?
-- Does IntelliSense/API discovery guide me toward correct usage?
+- Does IDE completion/API discovery guide me toward correct usage?
 
 Treat confusion as API-design feedback.
 
@@ -1997,6 +2005,8 @@ A reusable API should fail well.
 # 104. FRESH-PROJECT CONSUMER TEST
 
 Create or conceptually evaluate a minimal clean consumer.
+
+As in Section 101, create it in a temporary directory outside the repository and delete it afterwards; keep only what is worth turning into a real contract test in the test project.
 
 Reference the library.
 
@@ -2089,7 +2099,7 @@ Find:
 
 Remove when safe.
 
-Public unused APIs may require deprecation rather than immediate deletion.
+Public unused APIs may require deprecation rather than immediate deletion. "Unused" means no consumer was found anywhere, not merely none in this repository; apply the breaking-change guardrail in Section 78.
 
 ---
 
@@ -2328,17 +2338,14 @@ Do not use naive string operations for extension handling.
 
 Test:
 
+```text
 file.txt
-
 FILE.TXT
-
 file
-
 file.
-
 archive.tar.gz
-
 .hiddenfile
+```
 
 Use platform APIs and explicit semantics.
 
@@ -2587,17 +2594,20 @@ Prefer components that are usable immediately when practical.
 
 ---
 
-# 142. STATIC CONSTRUCTORS
+# 142. STATIC / MODULE-LOAD INITIALIZATION
 
-Review static constructors for:
+Review code that runs automatically when a type or module is first loaded: .NET static constructors and static field initializers, Python and JavaScript import-time side effects (top-level module code), C++ global and static object constructors (including static-initialization order across translation units), and their equivalents in other languages.
+
+Review it for:
 
 - I/O
 - Environment access
 - Exceptions
 - Expensive work
 - Global mutation
+- Dependence on other load-time initialization having already run
 
-A static initialization failure can make a type unusable for the entire process.
+A static initialization failure can make a type unusable for the entire process, and an import-time failure can make a whole module unimportable.
 
 Keep static initialization simple.
 
@@ -2720,6 +2730,8 @@ Before finalizing changes, explicitly identify:
 
 Do not allow accidental breaking changes to hide inside "cleanup."
 
+Check every item on this list against the breaking-change guardrail in Section 78. Any break whose consumers were not all found and updated in this session must be reverted to an additive or deprecating change, or reported as a recommendation.
+
 ---
 
 # 152. MIGRATION PATH
@@ -2728,11 +2740,13 @@ For intentional breaking/deprecated changes, provide a clear migration path.
 
 Example:
 
+```text
 Old:
 Foo.DoThing(...)
 
 Replacement:
 Bar.Process(...)
+```
 
 Explain behavioral differences where relevant.
 
@@ -2861,7 +2875,7 @@ Do not make consumers discover ownership through leaks.
 
 # 161. FINAL CONSUMER ABUSE TEST
 
-Create small programs/tests that intentionally behave like imperfect consumers.
+Create small programs/tests that intentionally behave like imperfect consumers. In effect, repeat the misuse testing of Section 103 against the finished library, using the same throwaway-consumer rules as Section 101.
 
 Try:
 
@@ -2927,13 +2941,13 @@ This is one of the most important passes.
 
 Revisit the earlier:
 
-KEEP
-IMPROVE
-MERGE
-SPLIT
-MOVE
-DEPRECATE
-DELETE
+- KEEP
+- IMPROVE
+- MERGE
+- SPLIT
+- MOVE
+- DEPRECATE
+- DELETE
 
 classification after completing the technical review.
 
@@ -2976,7 +2990,9 @@ Ensure the review itself did not break consumers.
 
 # 166. FINAL CLEAN-CONSUMER TEST
 
-From a fresh/minimal consumer project:
+This repeats the fresh-project consumer test of Section 104 against the finished library.
+
+From a fresh/minimal consumer project, created in a temporary directory outside the repository and deleted afterwards:
 
 1. Reference the library.
 
@@ -3030,8 +3046,6 @@ After completing the review, provide a concise but meaningful report containing:
 ## Public API
 
 - API design issues found
-- Breaking changes
-- Deprecations
 - New safer replacements
 - Naming/consistency improvements
 
@@ -3191,7 +3205,7 @@ Be ruthless about that distinction.
 
 Then:
 
-> Could another developer correctly use this API from IntelliSense, its types, and its documentation without reading the implementation?
+> Could another developer correctly use this API from IDE completion, its types, and its documentation without reading the implementation?
 
 If not, improve the contract.
 

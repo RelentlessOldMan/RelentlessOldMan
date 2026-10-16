@@ -128,6 +128,8 @@ Recovery artifacts should identify the session that created them.
 
 This also integrates naturally with diagnostic logging.
 
+If the application already has a session ID or abnormal-shutdown marker (for example from a diagnostics system built to Spec_DiagnosticSystem.md), reuse it rather than adding a second.
+
 ---
 
 # 6. NORMAL VS ABNORMAL SHUTDOWN
@@ -136,6 +138,7 @@ Implement a reliable mechanism to determine whether the previous application ses
 
 One simple conceptual pattern is:
 
+```text
 Application starts
 → create/update session marker indicating RUNNING
 
@@ -145,6 +148,7 @@ Application shuts down successfully
 Next launch:
 → detect previous RUNNING marker
 → previous session likely terminated abnormally
+```
 
 Use an implementation appropriate for the platform.
 
@@ -167,7 +171,26 @@ rather than making unsupported claims about exactly what happened.
 
 ---
 
-# 7. DIRTY-STATE INTEGRATION
+# 7. MULTIPLE INSTANCES / LIVE OWNERS
+
+The startup logic above assumes any leftover RUNNING marker, recovery set, or temporary recovery file belongs to a previous session that ended abnormally.
+
+That assumption is false if another instance of the application is still running.
+
+Before treating a marker, recovery set, or temporary file as abandoned, verify that its owner is actually gone.
+
+Use a mechanism appropriate for the platform, such as:
+
+- A lock file held open by the owning process for its lifetime
+- Process ID plus process start time (a PID alone can be reused)
+
+Never offer, restore, or clean up recovery data that belongs to a live instance.
+
+If ownership cannot be determined reliably, preserve the data rather than deleting it on a guess.
+
+---
+
+# 8. DIRTY-STATE INTEGRATION
 
 Integrate recovery with the application's dirty/modified state.
 
@@ -177,6 +200,7 @@ Do not continuously write recovery snapshots when absolutely nothing has changed
 
 A useful conceptual model is:
 
+```text
 Change occurs
 → document becomes dirty
 → recovery becomes pending
@@ -190,6 +214,7 @@ Additional change occurs
 Normal Save succeeds
 → document becomes clean
 → obsolete recovery data can eventually be removed
+```
 
 Be careful:
 
@@ -203,7 +228,7 @@ The normal dirty-state indicator should remain correct.
 
 ---
 
-# 8. AUTOSAVE / RECOVERY SNAPSHOT STRATEGY
+# 9. AUTOSAVE / RECOVERY SNAPSHOT STRATEGY
 
 Implement recovery snapshots automatically when appropriate.
 
@@ -223,10 +248,12 @@ Avoid writing on every keystroke unless the persistence mechanism is specificall
 
 A reasonable generic strategy is:
 
+```text
 Meaningful edit
 → mark recovery pending
 → debounce
 → write recovery snapshot after activity settles
+```
 
 plus:
 
@@ -240,7 +267,7 @@ Do not blindly hardcode aggressive autosaving.
 
 ---
 
-# 9. DO NOT BLOCK THE UI
+# 10. DO NOT BLOCK THE UI
 
 Recovery snapshots should not noticeably freeze interactive applications.
 
@@ -257,7 +284,7 @@ Correctness comes first.
 
 ---
 
-# 10. CONSISTENT SNAPSHOT STATE
+# 11. CONSISTENT SNAPSHOT STATE
 
 A recovery snapshot must represent a coherent application state.
 
@@ -277,7 +304,7 @@ The snapshot should correspond to a well-defined logical moment.
 
 ---
 
-# 11. ATOMIC RECOVERY WRITES
+# 12. ATOMIC RECOVERY WRITES
 
 Recovery snapshots should be written safely.
 
@@ -292,11 +319,13 @@ Never destroy the previous usable recovery snapshot BEFORE the new snapshot has 
 
 The principle is:
 
+```text
 OLD VALID RECOVERY
 → write NEW TEMPORARY RECOVERY
 → verify
 → promote NEW
 → only then retire OLD
+```
 
 A crash halfway through should leave either:
 
@@ -312,15 +341,17 @@ rather than:
 
 ---
 
-# 12. RECOVERY GENERATIONS
+# 13. RECOVERY GENERATIONS
 
 Consider keeping a small number of recent recovery generations.
 
 For example:
 
+```text
 Current recovery
 Previous recovery
 Possibly one or two additional generations
+```
 
 This protects against situations where:
 
@@ -335,7 +366,7 @@ Use a small bounded number appropriate for the application's data size.
 
 ---
 
-# 13. RECOVERY METADATA
+# 14. RECOVERY METADATA
 
 Each recovery snapshot should include enough metadata to understand it.
 
@@ -358,7 +389,7 @@ Avoid sensitive information that is unnecessary.
 
 ---
 
-# 14. RECOVERY FORMAT VERSIONING
+# 15. RECOVERY FORMAT VERSIONING
 
 Version the recovery format.
 
@@ -377,7 +408,7 @@ Do not assume recovery serialization will remain identical forever.
 
 ---
 
-# 15. APPLICATION VERSION COMPATIBILITY
+# 16. APPLICATION VERSION COMPATIBILITY
 
 Recovery data may survive an application update.
 
@@ -392,7 +423,7 @@ Never blindly deserialize incompatible recovery state.
 
 ---
 
-# 16. RECOVERY DETECTION AT STARTUP
+# 17. RECOVERY DETECTION AT STARTUP
 
 At startup, inspect the recovery location.
 
@@ -406,7 +437,7 @@ Avoid bothering the user with obsolete recovery artifacts from documents that we
 
 ---
 
-# 17. RECOVERY UI
+# 18. RECOVERY UI
 
 When recoverable work exists, present a clear recovery experience.
 
@@ -435,7 +466,7 @@ Do not require users to understand "autosave snapshot generations."
 
 ---
 
-# 18. RECOVER SHOULD NOT OVERWRITE ORIGINAL FILE
+# 19. RECOVER SHOULD NOT OVERWRITE ORIGINAL FILE
 
 THIS IS CRITICAL.
 
@@ -463,7 +494,7 @@ Do not automatically overwrite Project.xyz.
 
 ---
 
-# 19. RECOVERED STATE SHOULD BE DIRTY
+# 20. RECOVERED STATE SHOULD BE DIRTY
 
 After recovery, the restored work should normally be treated as modified/unsaved.
 
@@ -479,7 +510,7 @@ or the application's normal dirty indicator.
 
 ---
 
-# 20. DO NOT DELETE RECOVERY TOO EARLY
+# 21. DO NOT DELETE RECOVERY TOO EARLY
 
 Do NOT delete recovery data merely because:
 
@@ -491,6 +522,7 @@ Keep recovery data until there is strong evidence it is no longer needed.
 
 A safer lifecycle is:
 
+```text
 Recovery detected
 → user chooses Recover
 → recovered state loads
@@ -498,12 +530,13 @@ Recovery detected
 → user successfully performs normal Save
 → recovery becomes obsolete
 → cleanup
+```
 
 If the application crashes AGAIN before the normal save, recovery should still be available.
 
 ---
 
-# 21. DISCARD BEHAVIOR
+# 22. DISCARD BEHAVIOR
 
 If the user explicitly chooses Discard:
 
@@ -520,7 +553,7 @@ After confirmed discard:
 
 ---
 
-# 22. DECIDE LATER
+# 23. DECIDE LATER
 
 Where useful, allow users to defer the decision.
 
@@ -530,7 +563,7 @@ This is especially useful if multiple documents have recovery snapshots.
 
 ---
 
-# 23. MULTIPLE RECOVERABLE DOCUMENTS
+# 24. MULTIPLE RECOVERABLE DOCUMENTS
 
 If the application supports multiple documents/projects, recovery should handle them independently.
 
@@ -546,7 +579,7 @@ Maintain correct document identity.
 
 ---
 
-# 24. NEW / NEVER-SAVED DOCUMENTS
+# 25. NEW / NEVER-SAVED DOCUMENTS
 
 Support recovery for work that has never been normally saved.
 
@@ -564,16 +597,18 @@ After recovery, the application should present it as unsaved work and require Sa
 
 ---
 
-# 25. SAVE AS INTERACTION
+# 26. SAVE AS INTERACTION
 
 Handle Save As carefully.
 
 Example:
 
+```text
 User opens A
 → edits
 → recovery exists for A
 → Save As B succeeds
+```
 
 The working document is now B.
 
@@ -585,7 +620,7 @@ However, do not delete old recovery until Save As has fully succeeded.
 
 ---
 
-# 26. NORMAL SAVE INTERACTION
+# 27. NORMAL SAVE INTERACTION
 
 When normal Save succeeds:
 
@@ -603,7 +638,7 @@ The failure of normal Save makes recovery MORE important, not less.
 
 ---
 
-# 27. SAVE CANCELLATION
+# 28. SAVE CANCELLATION
 
 If the user initiates Save or Save As and cancels:
 
@@ -615,15 +650,17 @@ If the user initiates Save or Save As and cancels:
 
 ---
 
-# 28. RECOVERY AFTER FAILED SAVE
+# 29. RECOVERY AFTER FAILED SAVE
 
 Explicitly test:
 
+```text
 Edit
 → recovery snapshot succeeds
 → normal Save attempted
 → normal Save fails
 → application crashes
+```
 
 On restart:
 
@@ -633,7 +670,7 @@ This is an important acceptance scenario.
 
 ---
 
-# 29. RECOVERY DURING IMPORT
+# 30. RECOVERY DURING IMPORT
 
 If importing creates or modifies meaningful work, determine when that work becomes recoverable.
 
@@ -643,7 +680,7 @@ Prefer recovery snapshots at coherent workflow boundaries.
 
 ---
 
-# 30. RECOVERY DURING LONG OPERATIONS
+# 31. RECOVERY DURING LONG OPERATIONS
 
 For long-running operations, determine whether:
 
@@ -657,17 +694,19 @@ If necessary, recover to the last coherent state before the operation.
 
 ---
 
-# 31. TRANSACTIONAL OPERATIONS
+# 32. TRANSACTIONAL OPERATIONS
 
 Where operations have clear commit points, align recovery with them.
 
 Conceptually:
 
+```text
 Valid State A
 → operation begins
 → temporary/transitional state
 → operation succeeds
 → Valid State B
+```
 
 Recovery should ideally contain A or B.
 
@@ -675,7 +714,7 @@ Avoid snapshots of undefined transitional state.
 
 ---
 
-# 32. RECOVERY WRITE FAILURE
+# 33. RECOVERY WRITE FAILURE
 
 Recovery itself can fail.
 
@@ -699,7 +738,7 @@ Avoid repeatedly bombarding them with identical dialogs.
 
 ---
 
-# 33. RECOVERY HEALTH STATUS
+# 34. RECOVERY HEALTH STATUS
 
 Internally track whether the current dirty state has been successfully captured.
 
@@ -721,7 +760,7 @@ Do not expose unnecessary technical detail to normal users.
 
 ---
 
-# 34. DISK SPACE
+# 35. DISK SPACE
 
 Recovery data must not grow without bound.
 
@@ -741,7 +780,7 @@ Do not silently consume gigabytes forever.
 
 ---
 
-# 35. CLEANUP POLICY
+# 36. CLEANUP POLICY
 
 Implement recovery cleanup.
 
@@ -760,7 +799,7 @@ It is better to retain a small unnecessary recovery file than prematurely delete
 
 ---
 
-# 36. ORPHANED TEMPORARY FILES
+# 37. ORPHANED TEMPORARY FILES
 
 A crash may leave:
 
@@ -778,9 +817,11 @@ If a completed recovery snapshot exists, prefer it over an incomplete temporary 
 
 Clean stale temporary files when safe.
 
+Before treating any temporary artifact as stale, confirm the session that wrote it is no longer running (see MULTIPLE INSTANCES / LIVE OWNERS).
+
 ---
 
-# 37. VALIDATE BEFORE RESTORE
+# 38. VALIDATE BEFORE RESTORE
 
 Never blindly deserialize recovery data directly into active application state.
 
@@ -800,29 +841,33 @@ Treat recovery data as potentially corrupt.
 
 ---
 
-# 38. SAFE RESTORATION
+# 39. SAFE RESTORATION
 
 Prefer:
 
+```text
 Read recovery
 → parse
 → validate
 → construct temporary candidate state
 → verify candidate
 → commit to active application state
+```
 
 rather than:
 
+```text
 Destroy current state
 → start reading recovery
 → fail halfway
 → application now has nothing usable
+```
 
 Preserve the previous valid state until restoration succeeds.
 
 ---
 
-# 39. CORRUPT RECOVERY
+# 40. CORRUPT RECOVERY
 
 If the newest recovery generation is corrupt:
 
@@ -836,7 +881,7 @@ Do not let one bad recovery file make the application unusable.
 
 ---
 
-# 40. CHECKSUM / INTEGRITY VALIDATION
+# 41. CHECKSUM / INTEGRITY VALIDATION
 
 For sufficiently important or complex recovery data, consider including integrity information such as a checksum.
 
@@ -852,7 +897,7 @@ The objective is corruption detection, not security theater.
 
 ---
 
-# 41. CRASH DURING RECOVERY WRITE
+# 42. CRASH DURING RECOVERY WRITE
 
 Explicitly design for:
 
@@ -870,7 +915,7 @@ This scenario is fundamental.
 
 ---
 
-# 42. CRASH DURING NORMAL SAVE
+# 43. CRASH DURING NORMAL SAVE
 
 Normal Save should itself use safe persistence techniques where practical.
 
@@ -878,16 +923,18 @@ Although this specification focuses on recovery, crash recovery cannot compensat
 
 Prefer atomic normal saves too:
 
+```text
 Original valid save
 → write temporary new save
 → validate
 → atomic replace
+```
 
 where the platform and application permit.
 
 ---
 
-# 43. CRASH DURING RECOVERY RESTORE
+# 44. CRASH DURING RECOVERY RESTORE
 
 If the application crashes while the user is restoring recovery:
 
@@ -897,15 +944,17 @@ On the next launch, recovery should remain available.
 
 ---
 
-# 44. CRASH AGAIN AFTER RECOVERY
+# 45. CRASH AGAIN AFTER RECOVERY
 
 Test:
 
+```text
 Crash
 → Recover
 → continue editing
 → crash again BEFORE normal Save
 → restart
+```
 
 The latest meaningful recovered/edit state should still be recoverable.
 
@@ -913,7 +962,7 @@ Recovery must survive repeated abnormal sessions.
 
 ---
 
-# 45. EXTERNAL RESOURCE REFERENCES
+# 46. EXTERNAL RESOURCE REFERENCES
 
 If projects reference external assets, recovery must preserve enough information to reconstruct references.
 
@@ -925,7 +974,7 @@ Do not make recovery unusable merely because one optional external file disappea
 
 ---
 
-# 46. EMBEDDED UNSAVED RESOURCES
+# 47. EMBEDDED UNSAVED RESOURCES
 
 If users can create or modify resources that do not yet exist independently on disk, determine whether recovery needs to preserve them.
 
@@ -940,7 +989,7 @@ If losing that resource would mean losing user work, recovery should account for
 
 ---
 
-# 47. PRIVACY
+# 48. PRIVACY
 
 Recovery data may contain user-created content.
 
@@ -954,7 +1003,7 @@ Use appropriate file permissions provided by the platform.
 
 ---
 
-# 48. SECURITY
+# 49. SECURITY
 
 Treat recovery files as untrusted input during restore.
 
@@ -970,7 +1019,7 @@ Do not restore secrets into unsafe locations.
 
 ---
 
-# 49. LOGGING / DIAGNOSTICS INTEGRATION
+# 50. LOGGING / DIAGNOSTICS INTEGRATION
 
 Integrate with the application's diagnostics system if one exists.
 
@@ -1004,7 +1053,7 @@ Include relevant recovery/session identifiers.
 
 ---
 
-# 50. SUPPORT PACKAGE INTEGRATION
+# 51. SUPPORT PACKAGE INTEGRATION
 
 If the application implements Save Diagnostic Report, include safe recovery metadata where useful.
 
@@ -1021,7 +1070,7 @@ Do NOT automatically include the user's recovery files themselves unless the use
 
 ---
 
-# 51. OPTIONAL RECOVERY STATUS UI
+# 52. OPTIONAL RECOVERY STATUS UI
 
 If appropriate, provide a subtle status indication when:
 
@@ -1035,7 +1084,7 @@ For many applications this can remain entirely invisible unless something fails.
 
 ---
 
-# 52. USER SETTINGS
+# 53. USER SETTINGS
 
 If the application exposes autosave/recovery settings, keep them understandable.
 
@@ -1055,7 +1104,7 @@ Choose safe defaults.
 
 ---
 
-# 53. DEFAULT BEHAVIOR
+# 54. DEFAULT BEHAVIOR
 
 Recovery should normally be ENABLED by default for applications where users can lose meaningful work.
 
@@ -1067,7 +1116,7 @@ A read-only viewer obviously does not need autosave recovery.
 
 ---
 
-# 54. PERFORMANCE
+# 55. PERFORMANCE
 
 Recovery should have minimal impact on normal use.
 
@@ -1093,7 +1142,7 @@ Start with the simplest reliable architecture that meets performance needs.
 
 ---
 
-# 55. DO NOT OVER-ENGINEER
+# 56. DO NOT OVER-ENGINEER
 
 Do not automatically build:
 
@@ -1114,7 +1163,7 @@ Reliability matters more than architectural cleverness.
 
 ---
 
-# 56. RECOVERY TEST HARNESS
+# 57. RECOVERY TEST HARNESS
 
 Where practical, make recovery behavior testable.
 
@@ -1134,7 +1183,7 @@ Do not ship dangerous debug controls to normal users unless appropriately hidden
 
 ---
 
-# 57. AUTOMATED TESTS
+# 58. AUTOMATED TESTS
 
 Add automated tests covering at minimum:
 
@@ -1160,10 +1209,11 @@ Add automated tests covering at minimum:
 - Recovery identity
 - Recovery after repeated crash
 - Recovery of multiple documents where supported
+- Second instance running (its live RUNNING marker, recovery set, and temporary files are not offered, restored, or cleaned)
 
 ---
 
-# 58. ROUND-TRIP TESTING
+# 59. ROUND-TRIP TESTING
 
 Create meaningful state.
 
@@ -1185,7 +1235,7 @@ Can it actually reconstruct the user's work correctly?
 
 ---
 
-# 59. MANUAL CRASH TESTING
+# 60. MANUAL CRASH TESTING
 
 Perform real manual testing where practical.
 
@@ -1210,7 +1260,7 @@ Do not rely exclusively on graceful shutdown tests.
 
 ---
 
-# 60. CRASH AT DIFFERENT MOMENTS
+# 61. CRASH AT DIFFERENT MOMENTS
 
 Test forced termination during:
 
@@ -1228,7 +1278,7 @@ The application should recover to the safest coherent state available.
 
 ---
 
-# 61. RECOVERY MUST NEVER MAKE THINGS WORSE
+# 62. RECOVERY MUST NEVER MAKE THINGS WORSE
 
 At every design decision ask:
 
@@ -1248,12 +1298,13 @@ Recovery is secondary.
 
 ---
 
-# 62. GOLDEN FAILURE SCENARIOS
+# 63. GOLDEN FAILURE SCENARIOS
 
 Explicitly test these scenarios:
 
 ## Scenario A — Simple crash
 
+```text
 Open saved project
 → edit
 → recovery snapshot
@@ -1261,9 +1312,11 @@ Open saved project
 → restart
 → recover
 → edits restored
+```
 
 ## Scenario B — Never-saved work
 
+```text
 New project
 → substantial edits
 → recovery snapshot
@@ -1271,11 +1324,13 @@ New project
 → restart
 → recover
 → Save As
+```
 
 No work should be lost merely because the project had never received a filename.
 
 ## Scenario C — Save failure
 
+```text
 Open
 → edit
 → recovery exists
@@ -1283,72 +1338,85 @@ Open
 → Save fails
 → crash
 → restart
+```
 
 Recovery must remain available.
 
 ## Scenario D — Save As cancellation
 
+```text
 New project
 → edit
 → recovery exists
 → Save As
 → Cancel
 → crash
+```
 
 Recovery must remain available.
 
 ## Scenario E — Crash during recovery write
 
+```text
 Recovery generation N is valid
 → generation N+1 begins
 → terminate process halfway through write
 → restart
+```
 
 Generation N must remain usable.
 
 ## Scenario F — Corrupt latest recovery
 
+```text
 Generation N valid
 → generation N+1 corrupt
 → restart
+```
 
 Application should safely fall back to N where possible.
 
 ## Scenario G — Crash after recovery
 
+```text
 Crash
 → recover
 → continue editing
 → recovery updates
 → crash again
 → restart
+```
 
 Latest coherent work should remain recoverable.
 
 ## Scenario H — Normal save after recovery
 
+```text
 Crash
 → recover
 → verify
 → Save successfully
 → exit normally
 → restart
+```
 
 Obsolete recovery should not continue appearing.
 
 ## Scenario I — Original file remains safe
 
+```text
 Saved project exists
 → edit
 → recovery exists
 → crash
 → recover
+```
 
 The original saved project must remain unchanged until the user explicitly saves recovered work.
 
 ---
 
-# 63. FINAL IMPLEMENTATION REVIEW
+# 64. FINAL IMPLEMENTATION REVIEW
 
 After implementing recovery, inspect the system specifically for:
 
@@ -1439,6 +1507,6 @@ Treat the user's last known-good save as sacred.
 
 Treat unsaved work as valuable.
 
-Treat recovery data as expendable protection around both.
+Treat recovery data as secondary to saved work — but never discard it while it may be the only copy of the user's work.
 
 Design every failure path accordingly.

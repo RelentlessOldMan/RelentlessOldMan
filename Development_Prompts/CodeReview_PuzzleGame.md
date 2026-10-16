@@ -14,7 +14,7 @@ The objective is:
 
 > Are the puzzle rules correct under every meaningful state, are puzzles solvable as intended, can player actions ever corrupt or softlock the game, do undo/restart/hints/save/resume work correctly, and does the game behave predictably no matter what order the player does things in?
 
-Approach the game both as:
+Approach the game as each of:
 
 - A developer
 - A tester
@@ -27,6 +27,28 @@ Do not assume intended behavior from implementation alone.
 Infer the actual game rules and verify the implementation consistently enforces them.
 
 Adapt this review to the game's actual puzzle mechanics.
+
+---
+
+# SAFETY RULES
+
+This review deliberately tries to break things. Break the game, never the machine or anyone's real data.
+
+- Simulate clock and time changes (clock jumps, time-zone changes, date rollover, sleep/resume gaps) through an injected or fake clock. Never change the system clock or time zone.
+- Never put the machine to sleep, hibernate it, or log the user out to test suspend behavior. Simulate it through the application's own lifecycle hooks or an injected clock.
+- Corrupt only copies of save, settings, and progression files, inside an isolated temporary profile/data directory.
+- Never read from, write to, or delete the real save, settings, or progression directories of the developer or any player.
+
+---
+
+# HOW TO WORK
+
+- Fix confirmed bugs. Each fix gets a regression test that fails before the fix and passes after it.
+- Build and run the test suite after each batch of changes. Do not let untested changes pile up.
+- If an intended rule or policy is unclear (scoring, timer semantics, what Undo covers, whether a dead end is allowed, etc.), do not invent one. Flag it in the report as a question for the developer.
+- Do not change puzzle rules, difficulty, or scoring design without asking. Fix implementations that violate the intended design; do not redesign the game.
+- Exercise gameplay scenarios through the model/engine and automated tests wherever possible — action sequences, undo/redo, save/load, races, and invariants can almost always be driven without the UI.
+- Anything that genuinely needs hands-on manual play (feel, animation timing, input devices, focus/resize/DPI behavior, first-time-player clarity) goes into a manual-play checklist for the developer in the report.
 
 ---
 
@@ -231,11 +253,13 @@ It should generally preserve puzzle identity.
 
 Verify:
 
+```text
 Current puzzle
 → make many changes
 → request restart
 → confirm if appropriate
 → exact original puzzle restored
+```
 
 Also verify:
 
@@ -300,9 +324,11 @@ If Redo exists:
 
 Test:
 
+```text
 Move
 → Undo
 → Redo
+```
 
 The exact logical state should return.
 
@@ -310,12 +336,14 @@ Test multiple levels.
 
 Test:
 
+```text
 Move A
 → Move B
 → Undo B
 → Undo A
 → Redo A
 → Redo B
+```
 
 ---
 
@@ -323,10 +351,12 @@ Move A
 
 Test:
 
+```text
 Move A
 → Move B
 → Undo B
 → make Move C
+```
 
 Redo B should normally become unavailable.
 
@@ -555,10 +585,12 @@ Puzzle generation can fail.
 
 Do not allow:
 
+```text
 while (!validPuzzle)
 {
     generateAgain();
 }
+```
 
 to run forever without safeguards.
 
@@ -719,10 +751,12 @@ Ensure all associated state changes are correct and undoable where intended.
 
 Test:
 
+```text
 Hint
 → Hint
 → Hint
 → Hint
+```
 
 Ensure:
 
@@ -738,10 +772,12 @@ Ensure:
 
 Test:
 
+```text
 Move
 → Hint
 → Undo
 → Hint
+```
 
 The new hint must correspond to CURRENT state, not cached previous state.
 
@@ -822,17 +858,21 @@ Prevent:
 
 Explicitly test whether players can manipulate scoring through:
 
+```text
 Move
 → gain points
 → Undo
 → Redo
 → gain points again
+```
 
 or:
 
+```text
 Hint
 → Undo
 → request same reward
+```
 
 Determine intended policy and enforce it.
 
@@ -869,6 +909,8 @@ Test whether timer behavior is correct during:
 
 Follow intended game rules.
 
+Simulate system sleep and backgrounding through lifecycle hooks or an injected clock; never actually sleep the machine (see SAFETY RULES).
+
 ---
 
 # 48. TIMER CLOCK SOURCE
@@ -883,11 +925,15 @@ Do not calculate gameplay duration solely by subtracting wall-clock timestamps i
 
 If scores/times matter, consider:
 
+```text
 Game starts
 → system clock changes
 → game completes
+```
 
 Elapsed time should remain sensible.
+
+Test this with an injected clock that jumps forward and backward. Never change the real system clock (see SAFETY RULES).
 
 ---
 
@@ -1059,10 +1105,12 @@ Avoid duplicate completion events.
 
 Test:
 
+```text
 Final move
 → completion handler begins
 → another event fires
 → completion handler invoked again
+```
 
 Protect completion processing from running multiple times.
 
@@ -1104,11 +1152,13 @@ Provide clear restart/retry path.
 
 If puzzle progress is persisted, test:
 
+```text
 Start puzzle
 → make moves
 → save/exit
 → restart application
 → resume
+```
 
 Verify exact meaningful state.
 
@@ -1547,9 +1597,11 @@ State should remain coherent when focus returns.
 
 Where platform-relevant, test:
 
+```text
 Game active
 → application suspended/backgrounded
 → resume
+```
 
 Verify:
 
@@ -1770,8 +1822,10 @@ Apply consistently.
 
 Test:
 
+```text
 Active unfinished puzzle
 → New Puzzle
+```
 
 Ensure intended behavior:
 
@@ -1807,8 +1861,10 @@ If difficulty determines puzzle rules or generation, do not silently mutate the 
 
 Usually:
 
+```text
 Difficulty change
 → applies to next puzzle
+```
 
 unless intentionally designed otherwise.
 
@@ -1822,7 +1878,9 @@ Treat rule set as explicit state.
 
 Do not scatter:
 
+```text
 if (hardMode)
+```
 
 through unrelated code if a cleaner rule abstraction exists.
 
@@ -1951,6 +2009,7 @@ After every action verify invariants.
 
 Examples:
 
+```text
 Move
 Undo
 Undo
@@ -1960,6 +2019,7 @@ Redo
 Restart
 Move
 Move
+```
 
 This can expose state-machine bugs humans do not naturally test.
 
@@ -1969,6 +2029,7 @@ This can expose state-machine bugs humans do not naturally test.
 
 Where appropriate, verify properties such as:
 
+```text
 Legal move
 → state remains valid
 
@@ -1993,6 +2054,7 @@ Generated puzzle
 
 Unique puzzle
 → solver finds exactly one solution
+```
 
 These are exceptionally valuable puzzle-game tests.
 
@@ -2021,10 +2083,12 @@ Do not impose unacceptable runtime cost in production.
 
 Test:
 
+```text
 Puzzle state
 → serialize
 → deserialize
 → equivalent puzzle state
+```
 
 Include:
 
@@ -2040,11 +2104,13 @@ Include:
 
 For every representative legal action:
 
+```text
 State A
 → action
 → State B
 → Undo
 → State A
+```
 
 Compare logically, not merely visually.
 
@@ -2054,6 +2120,7 @@ Compare logically, not merely visually.
 
 Likewise:
 
+```text
 State A
 → action
 → State B
@@ -2061,6 +2128,7 @@ State A
 → State A
 → Redo
 → State B
+```
 
 ---
 
@@ -2068,9 +2136,11 @@ State A
 
 For arbitrary valid player progress:
 
+```text
 Current state
 → Restart
 → exact intended initial state
+```
 
 ---
 
@@ -2078,16 +2148,20 @@ Current state
 
 Every generated puzzle should satisfy:
 
+```text
 Generate
 → Solve
 → Validate solution
 → success
+```
 
 If uniqueness is required:
 
+```text
 Generate
 → count solutions
 → exactly one
+```
 
 ---
 
@@ -2105,10 +2179,12 @@ A player should not be able to freeze the application merely by loading a pathol
 
 Repeatedly:
 
+```text
 New puzzle
 → play
 → finish
 → new puzzle
+```
 
 Look for growing:
 
@@ -2140,10 +2216,12 @@ Solver/hint/generator tasks from an old puzzle must not continue modifying a new
 
 On:
 
+```text
 Restart
 New Game
 Load
 Exit
+```
 
 cancel or invalidate stale work appropriately.
 
@@ -2483,14 +2561,18 @@ Prefer validating an action before destructively modifying current state.
 
 Avoid:
 
+```text
 Remove piece from source
 → discover destination invalid
 → attempt to reconstruct source
+```
 
 when:
 
+```text
 Validate destination
 → perform move
+```
 
 is possible.
 
@@ -2565,7 +2647,7 @@ Examples:
 - Resize while dragging
 - Minimize during animation
 - Exit during generation
-- Load corrupt save
+- Load corrupt save (a corrupted copy in an isolated temp profile)
 - Change settings mid-operation
 - Double-click completion action
 - Mash keyboard shortcuts
@@ -2730,7 +2812,7 @@ Upgrade behavior should be intentional.
 
 # 169. CORRUPT LOCAL DATA
 
-Corrupt individual local files.
+Corrupt individual local files — copies only, inside an isolated temporary profile, never the real save/settings directories (see SAFETY RULES).
 
 The game should recover as gracefully as possible.
 
@@ -3050,6 +3132,14 @@ After completing the review, provide a concise but meaningful report containing:
 - Intentional design choices
 - Areas requiring future work
 
+## Questions for the Developer
+
+- Unclear rules or policies that were flagged rather than invented
+
+## Manual-Play Checklist
+
+- Scenarios that genuinely need hands-on play, with steps and expected behavior
+
 Do not pad this report with trivial cosmetic changes.
 
 ---
@@ -3168,7 +3258,7 @@ Where practical, the answer should be:
 
 Then:
 
-> If a player tells me "Puzzle 4F92A is impossible," can I reproduce exactly what they saw?
+> If a player tells the developer "Puzzle 4F92A is impossible," can the developer reproduce exactly what they saw?
 
 For generated games, design toward:
 

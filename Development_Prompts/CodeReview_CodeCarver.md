@@ -25,11 +25,13 @@ This review has two phases. **Phase 1 — audit:** do not modify code until the 
 
 Do not stop after identifying obvious bugs. Review the complete architecture and deliberately search for subtle cases that ordinary tests are unlikely to exercise.
 
+**Safety:** use small corpora by default. Ask the user before any full-scale run (for example a 100 GB CodeSpawner corpus) and before any run against a network share. Write carve output only to a scratch directory — never into or over the source tree being carved.
+
 ---
 
-# 2. Fundamental Correctness Model
+## 2. Fundamental Correctness Model
 
-## 2.1 Define the carving contract
+### 2.1 Define the carving contract
 
 Before evaluating the implementation, determine exactly what CodeCarver promises to preserve.
 
@@ -57,7 +59,7 @@ Do not evaluate the tool against an imagined contract.
 
 Where the contract is ambiguous, identify the ambiguity and explain its consequences.
 
-## 2.2 Establish reachability categories
+### 2.2 Establish reachability categories
 
 Every relevant symbol or source construct should be classified conceptually as:
 
@@ -75,7 +77,7 @@ In particular, **absence of a discovered dependency is not automatically proof o
 
 Unknown dependencies must not silently become removal decisions.
 
-## 2.3 Soundness versus precision
+### 2.3 Soundness versus precision
 
 Evaluate two distinct properties.
 
@@ -93,7 +95,7 @@ An aggressive analyzer may appear effective while silently introducing correctne
 
 Identify both failure modes.
 
-## 2.4 Semantic preservation
+### 2.4 Semantic preservation
 
 Evaluate preservation of:
 
@@ -120,7 +122,7 @@ Do not assume compilation success proves semantic equivalence.
 
 ---
 
-# 3. Complete Pipeline Audit
+## 3. Complete Pipeline Audit
 
 Map the entire CodeCarver pipeline.
 
@@ -170,11 +172,11 @@ A correct dependency graph does not guarantee safe source rewriting.
 
 ---
 
-# 4. Clang AST and Semantic Analysis
+## 4. Clang AST and Semantic Analysis
 
 Where CodeCarver uses Clang or LLVM, inspect its use of Clang APIs and AST representations.
 
-## 4.1 Declaration identity
+### 4.1 Declaration identity
 
 Determine whether declarations are identified using reliable semantic identities.
 
@@ -193,7 +195,7 @@ Investigate:
 
 Identify any logic relying on names alone where names are insufficient.
 
-## 4.2 Declaration versus definition
+### 4.2 Declaration versus definition
 
 Test:
 
@@ -210,7 +212,7 @@ Test:
 
 Determine whether the analyzer correctly associates declarations with their required definitions.
 
-## 4.3 AST traversal completeness
+### 4.3 AST traversal completeness
 
 Inspect all AST visitors and matchers.
 
@@ -220,7 +222,7 @@ Look for omitted AST node categories.
 
 Pay particular attention to nodes that do not resemble ordinary function calls but still introduce dependencies.
 
-## 4.4 Implicit AST nodes
+### 4.4 Implicit AST nodes
 
 Investigate whether implicit compiler-generated constructs are handled.
 
@@ -239,7 +241,7 @@ Examples:
 
 Determine whether filtering implicit nodes accidentally removes required dependencies.
 
-## 4.5 Dependent AST nodes
+### 4.5 Dependent AST nodes
 
 Inspect handling of C++ template-dependent expressions.
 
@@ -254,7 +256,7 @@ Examples:
 
 Determine whether the analyzer incorrectly assumes dependencies are fully resolved before instantiation.
 
-## 4.6 Source-location reliability
+### 4.6 Source-location reliability
 
 Inspect use of:
 
@@ -270,11 +272,11 @@ Determine whether incorrect location selection can remove or preserve the wrong 
 
 ---
 
-# 5. Preprocessor and Conditional Compilation
+## 5. Preprocessor and Conditional Compilation
 
 The C/C++ preprocessor is a critical source of correctness risks.
 
-## 5.1 Macro expansion
+### 5.1 Macro expansion
 
 Test:
 
@@ -294,13 +296,13 @@ Test:
 
 Determine whether dependencies introduced through macro expansion are correctly recognized.
 
-## 5.2 Macro-generated symbols
+### 5.2 Macro-generated symbols
 
 Construct tests where functions, classes, or variables are declared through macros.
 
 Verify that CodeCarver can preserve the necessary original macro definitions and invocation sites.
 
-## 5.3 Conditional compilation
+### 5.3 Conditional compilation
 
 Test:
 
@@ -320,7 +322,7 @@ Determine whether reachability is scoped to the actual compilation configuration
 
 A symbol unreachable in one configuration may be required in another.
 
-## 5.4 Multiple build configurations
+### 5.4 Multiple build configurations
 
 Investigate whether CodeCarver:
 
@@ -332,7 +334,7 @@ Investigate whether CodeCarver:
 
 Explicitly identify which guarantees apply to each configuration.
 
-## 5.5 Header inclusion
+### 5.5 Header inclusion
 
 Test:
 
@@ -348,13 +350,13 @@ Test:
 - Headers with global initialization.
 - Headers with macro-generated declarations.
 
-## 5.6 Include-order dependencies
+### 5.6 Include-order dependencies
 
 Investigate whether generated output preserves required include ordering.
 
 Test headers that depend on declarations, macros, pragmas, or configuration established by earlier includes.
 
-## 5.7 Preprocessor directives and rewriting
+### 5.7 Preprocessor directives and rewriting
 
 Determine whether CodeCarver can safely remove code inside conditional regions without corrupting directive structure.
 
@@ -362,7 +364,7 @@ Test removal of declarations surrounded by nested conditional directives.
 
 Ensure rewritten files remain preprocessable.
 
-## 5.8 Macro safety boundaries
+### 5.8 Macro safety boundaries
 
 Identify constructs that cannot be safely rewritten at fine granularity because source text is shared across macro expansions.
 
@@ -372,9 +374,9 @@ Avoid blanket preservation of entire files when a smaller safe boundary can be e
 
 ---
 
-# 6. C Language Semantics
+## 6. C Language Semantics
 
-## 6.1 Function pointers
+### 6.1 Function pointers
 
 Test:
 
@@ -390,7 +392,7 @@ Test:
 
 Determine whether possible call targets are preserved.
 
-## 6.2 Callback registration
+### 6.2 Callback registration
 
 Construct tests where a function is referenced only through registration.
 
@@ -405,7 +407,7 @@ Examples:
 
 Verify that registration dependencies propagate correctly.
 
-## 6.3 Global initialization
+### 6.3 Global initialization
 
 Test:
 
@@ -419,31 +421,31 @@ Test:
 
 Distinguish initialization that is required from initialization that is provably irrelevant.
 
-## 6.4 Tentative definitions
+### 6.4 Tentative definitions
 
 Test C tentative definitions across translation units.
 
 Verify correct handling of compiler modes and linkage rules.
 
-## 6.5 Compound literals
+### 6.5 Compound literals
 
 Test C compound literals and their storage-duration semantics.
 
 Ensure dependencies on contained types, expressions, and referenced symbols are preserved.
 
-## 6.6 Designated initializers
+### 6.6 Designated initializers
 
 Test nested and out-of-order designated initializers.
 
 Verify field and type dependencies.
 
-## 6.7 Flexible array members
+### 6.7 Flexible array members
 
 Test structures containing flexible array members.
 
 Verify that size, layout, allocation, and access dependencies are handled correctly.
 
-## 6.8 GNU C extensions
+### 6.8 GNU C extensions
 
 Where supported, test:
 
@@ -459,13 +461,13 @@ Where supported, test:
 
 Do not assume standard C AST patterns cover compiler extensions.
 
-## 6.9 Volatile and memory-mapped I/O
+### 6.9 Volatile and memory-mapped I/O
 
 Test volatile reads and writes, including hardware-register access.
 
 Determine whether the analyzer recognizes side effects that may not resemble ordinary function calls.
 
-## 6.10 Inline assembly
+### 6.10 Inline assembly
 
 Investigate:
 
@@ -480,9 +482,9 @@ Identify limitations in static dependency discovery.
 
 ---
 
-# 7. C++ Name Resolution and Overloading
+## 7. C++ Name Resolution and Overloading
 
-## 7.1 Namespaces
+### 7.1 Namespaces
 
 Test:
 
@@ -497,7 +499,7 @@ Test:
 
 Verify correct symbol identity.
 
-## 7.2 Overloaded functions
+### 7.2 Overloaded functions
 
 Test:
 
@@ -513,13 +515,13 @@ Test:
 
 Determine whether the exact selected overload is retained.
 
-## 7.3 Argument-dependent lookup
+### 7.3 Argument-dependent lookup
 
 Construct tests where required functions are found only through ADL.
 
 Verify that the analyzer preserves the selected function and its dependencies.
 
-## 7.4 Operator overloading
+### 7.4 Operator overloading
 
 Test:
 
@@ -536,7 +538,7 @@ Test:
 
 Determine whether implicit operator calls are represented correctly in the dependency graph.
 
-## 7.5 Conversion semantics
+### 7.5 Conversion semantics
 
 Test:
 
@@ -551,11 +553,11 @@ Ensure required constructors and destructors survive carving.
 
 ---
 
-# 8. C++ Templates and Metaprogramming
+## 8. C++ Templates and Metaprogramming
 
 Templates require a dedicated adversarial review.
 
-## 8.1 Function templates
+### 8.1 Function templates
 
 Test:
 
@@ -570,7 +572,7 @@ Test:
 
 Verify that the correct instantiated dependencies are retained.
 
-## 8.2 Class templates
+### 8.2 Class templates
 
 Test:
 
@@ -583,13 +585,13 @@ Test:
 - Variable templates.
 - Template aliases.
 
-## 8.3 Template instantiation dependencies
+### 8.3 Template instantiation dependencies
 
 Determine whether CodeCarver understands dependencies that emerge only after substitution.
 
 Investigate whether it incorrectly prunes primary templates, specializations, or helper declarations.
 
-## 8.4 SFINAE and constraints
+### 8.4 SFINAE and constraints
 
 Test expressions that affect overload viability without appearing in ordinary runtime call paths.
 
@@ -602,7 +604,7 @@ Examples:
 - Detection idioms.
 - Substitution-dependent expressions.
 
-## 8.5 Compile-time evaluation
+### 8.5 Compile-time evaluation
 
 Test:
 
@@ -616,7 +618,7 @@ Test:
 
 Determine whether compile-time-only dependencies are retained when necessary to build the output.
 
-## 8.6 Type traits and unevaluated operands
+### 8.6 Type traits and unevaluated operands
 
 Test:
 
@@ -631,7 +633,7 @@ Test:
 
 A dependency may be required for compilation even when no runtime execution occurs.
 
-## 8.7 Template-heavy standard library usage
+### 8.7 Template-heavy standard library usage
 
 Test representative uses of:
 
@@ -651,9 +653,9 @@ Identify whether CodeCarver incorrectly attributes library-generated dependencie
 
 ---
 
-# 9. C++ Classes, Inheritance, and Virtual Dispatch
+## 9. C++ Classes, Inheritance, and Virtual Dispatch
 
-## 9.1 Class relationships
+### 9.1 Class relationships
 
 Test:
 
@@ -668,13 +670,13 @@ Test:
 
 Determine whether type and layout dependencies are preserved.
 
-## 9.2 Virtual functions
+### 9.2 Virtual functions
 
 Construct tests where a function is reachable only through virtual dispatch.
 
 Verify that all relevant possible overrides are considered.
 
-## 9.3 Dynamic type analysis
+### 9.3 Dynamic type analysis
 
 Determine whether CodeCarver tracks possible concrete types.
 
@@ -691,7 +693,7 @@ Investigate:
 
 Identify cases where the analyzer is too aggressive or unnecessarily conservative.
 
-## 9.4 Pure virtual functions
+### 9.4 Pure virtual functions
 
 Test abstract classes and pure virtual functions.
 
@@ -699,13 +701,13 @@ Include pure virtual functions that have definitions.
 
 Verify preservation of required declarations, overrides, and definitions.
 
-## 9.5 Virtual destructors
+### 9.5 Virtual destructors
 
 Test deletion through base-class pointers.
 
 Ensure derived destructors and required cleanup dependencies are retained.
 
-## 9.6 RTTI
+### 9.6 RTTI
 
 Test:
 
@@ -717,13 +719,13 @@ Test:
 
 Evaluate whether type information and required class relationships survive carving.
 
-## 9.7 Vtables and ABI
+### 9.7 Vtables and ABI
 
 Investigate whether removing apparently unused virtual functions, key functions, or class definitions can change ABI requirements or produce linker failures.
 
 Account for compiler-specific vtable emission rules.
 
-## 9.8 Object layout
+### 9.8 Object layout
 
 Determine whether removing fields, base classes, or declarations can change:
 
@@ -739,9 +741,9 @@ Do not recommend member-level elimination without a clearly defined layout-prese
 
 ---
 
-# 10. Constructors, Destructors, and Object Lifetime
+## 10. Constructors, Destructors, and Object Lifetime
 
-## 10.1 Implicit constructors
+### 10.1 Implicit constructors
 
 Test compiler-generated:
 
@@ -752,7 +754,7 @@ Test compiler-generated:
 
 Verify dependencies on member and base-class constructors.
 
-## 10.2 Destructors
+### 10.2 Destructors
 
 Test:
 
@@ -764,7 +766,7 @@ Test:
 - Destructors of local statics.
 - Destructors of global objects.
 
-## 10.3 RAII
+### 10.3 RAII
 
 Construct tests where important behavior occurs only in destructors.
 
@@ -779,13 +781,13 @@ Examples:
 
 Ensure the analyzer does not overlook destructor-side effects.
 
-## 10.4 Temporary objects
+### 10.4 Temporary objects
 
 Test temporary materialization, lifetime extension, and cleanup.
 
 Determine whether implicit dependencies are retained.
 
-## 10.5 Static initialization and destruction
+### 10.5 Static initialization and destruction
 
 Investigate:
 
@@ -799,7 +801,7 @@ Investigate:
 
 A constructor or destructor may execute without an explicit call from an entry point.
 
-## 10.6 Exception handling
+### 10.6 Exception handling
 
 Test:
 
@@ -816,9 +818,9 @@ Ensure exception-related dependencies survive.
 
 ---
 
-# 11. Function Pointers, Callbacks, and Indirect Reachability
+## 11. Function Pointers, Callbacks, and Indirect Reachability
 
-## 11.1 Indirect call graph
+### 11.1 Indirect call graph
 
 Evaluate whether CodeCarver handles indirect calls soundly.
 
@@ -835,7 +837,7 @@ Include:
 - Dispatch tables.
 - Callback registries.
 
-## 11.2 Address-taken functions
+### 11.2 Address-taken functions
 
 Determine how CodeCarver handles functions whose addresses are taken.
 
@@ -843,7 +845,7 @@ Taking a function address does not necessarily mean the function is executed, bu
 
 Evaluate whether the analyzer distinguishes these cases.
 
-## 11.3 Escape analysis
+### 11.3 Escape analysis
 
 Investigate function pointers passed into:
 
@@ -857,13 +859,13 @@ Investigate function pointers passed into:
 
 Determine whether targets remain reachable when their eventual invocation cannot be statically observed.
 
-## 11.4 Pointer aliasing
+### 11.4 Pointer aliasing
 
 Construct tests where function pointers pass through several assignments, structures, arrays, or parameters.
 
 Evaluate whether alias analysis is sufficient.
 
-## 11.5 Indirect-call precision
+### 11.5 Indirect-call precision
 
 Determine whether unresolved indirect calls cause excessive retention.
 
@@ -871,9 +873,9 @@ Investigate opportunities for more precise target-set analysis without introduci
 
 ---
 
-# 12. Global Variables, Static State, and Side Effects
+## 12. Global Variables, Static State, and Side Effects
 
-## 12.1 Global references
+### 12.1 Global references
 
 Identify dependencies through global variables.
 
@@ -887,27 +889,27 @@ Test:
 - Global registries.
 - Global callback tables.
 
-## 12.2 Initialization side effects
+### 12.2 Initialization side effects
 
 Construct programs where a global constructor performs registration or modifies shared state.
 
 Verify that the initialization is preserved when required.
 
-## 12.3 Destruction side effects
+### 12.3 Destruction side effects
 
 Test global and static destructors that perform observable actions.
 
-## 12.4 Volatile and atomic state
+### 12.4 Volatile and atomic state
 
 Determine whether accesses to volatile and atomic variables are correctly represented.
 
-## 12.5 Thread-local storage
+### 12.5 Thread-local storage
 
 Test thread-local initialization and destruction.
 
 Account for dependencies triggered by first use or thread termination.
 
-## 12.6 External visibility
+### 12.6 External visibility
 
 Investigate symbols that may be accessed from outside the analyzed source set.
 
@@ -925,33 +927,33 @@ Determine whether the carving contract permits removing externally visible symbo
 
 ---
 
-# 13. Cross-Translation-Unit Analysis
+## 13. Cross-Translation-Unit Analysis
 
-## 13.1 Symbol identity across files
+### 13.1 Symbol identity across files
 
 Verify that declarations and definitions from different translation units are associated correctly.
 
 Do not rely on simple name matching.
 
-## 13.2 Internal linkage
+### 13.2 Internal linkage
 
 Test identical static function names in different source files.
 
 Ensure they are not incorrectly merged.
 
-## 13.3 Anonymous namespaces
+### 13.3 Anonymous namespaces
 
 Verify that same-named entities in different anonymous namespaces remain distinct.
 
-## 13.4 External linkage
+### 13.4 External linkage
 
 Test external functions and variables declared in headers and defined elsewhere.
 
-## 13.5 Inline definitions
+### 13.5 Inline definitions
 
 Test inline functions defined in headers and used by multiple translation units.
 
-## 13.6 ODR requirements
+### 13.6 ODR requirements
 
 Investigate C++ One Definition Rule behavior.
 
@@ -966,7 +968,7 @@ Test:
 - Linkonce definitions.
 - Conflicting definitions.
 
-## 13.7 Linker dependencies
+### 13.7 Linker dependencies
 
 Identify dependencies not visible as ordinary source-level calls.
 
@@ -981,7 +983,7 @@ Examples:
 - Export tables.
 - Linker-generated references.
 
-## 13.8 Whole-program assumptions
+### 13.8 Whole-program assumptions
 
 Determine whether CodeCarver assumes access to every relevant translation unit.
 
@@ -997,9 +999,9 @@ Unknown external consumers must not be silently ignored.
 
 ---
 
-# 14. Build-System and Compilation Database Correctness
+## 14. Build-System and Compilation Database Correctness
 
-## 14.1 Compilation commands
+### 14.1 Compilation commands
 
 Inspect handling of:
 
@@ -1015,17 +1017,17 @@ Inspect handling of:
 - Precompiled headers.
 - Module options.
 
-## 14.2 Multiple commands per file
+### 14.2 Multiple commands per file
 
 Determine how CodeCarver handles one source file compiled under different configurations.
 
-## 14.3 Generated source
+### 14.3 Generated source
 
 Investigate generated headers and source files.
 
 Determine whether generation dependencies are preserved.
 
-## 14.4 Build-system metadata
+### 14.4 Build-system metadata
 
 Evaluate whether required information is obtained from:
 
@@ -1037,17 +1039,17 @@ Evaluate whether required information is obtained from:
 - Compilation databases.
 - Linker command lines.
 
-## 14.5 C and C++ linkage
+### 14.5 C and C++ linkage
 
 Test `extern "C"` declarations and mixed-language projects.
 
-## 14.6 Platform-specific code
+### 14.6 Platform-specific code
 
 Test compiler and platform conditionals.
 
 Do not assume that output valid for one target is valid for every supported target.
 
-## 14.7 Modules and precompiled headers
+### 14.7 Modules and precompiled headers
 
 Where supported, investigate C++20 modules, header units, and precompiled headers.
 
@@ -1055,9 +1057,9 @@ Ensure dependency analysis does not incorrectly treat imported declarations as o
 
 ---
 
-# 15. Reachability Graph Correctness
+## 15. Reachability Graph Correctness
 
-## 15.1 Graph node identity
+### 15.1 Graph node identity
 
 Determine whether nodes represent:
 
@@ -1074,7 +1076,7 @@ Determine whether nodes represent:
 
 Evaluate whether the representation is sufficiently precise.
 
-## 15.2 Dependency edge types
+### 15.2 Dependency edge types
 
 Inventory all edge categories.
 
@@ -1096,17 +1098,17 @@ Examples:
 
 Identify missing edge types.
 
-## 15.3 Directionality
+### 15.3 Directionality
 
 Verify dependency edges point in the correct direction.
 
 Incorrect edge direction can cause widespread over-retention or false removal.
 
-## 15.4 Transitive closure
+### 15.4 Transitive closure
 
 Verify reachability propagation across arbitrarily long dependency chains.
 
-## 15.5 Cycles
+### 15.5 Cycles
 
 Test:
 
@@ -1118,29 +1120,29 @@ Test:
 
 Determine whether strongly connected components are handled correctly.
 
-## 15.6 Incremental graph updates
+### 15.6 Incremental graph updates
 
 If CodeCarver supports incremental analysis, determine whether graph updates correctly invalidate obsolete dependencies.
 
-## 15.7 Graph completeness
+### 15.7 Graph completeness
 
 Evaluate whether all relevant AST relationships become graph edges.
 
 Trace representative constructs from AST node through dependency extraction to final reachability classification.
 
-## 15.8 Unknown edges
+### 15.8 Unknown edges
 
 Determine how unresolved references are represented.
 
 Unknown dependencies must not silently disappear from the graph.
 
-## 15.9 Reachability explanations
+### 15.9 Reachability explanations
 
 Evaluate whether the analyzer can explain why a symbol is retained.
 
 A useful explanation should include a path from a root or a documented conservative retention rule.
 
-## 15.10 Removal explanations
+### 15.10 Removal explanations
 
 Evaluate whether CodeCarver can explain why a symbol is classified as removable.
 
@@ -1148,9 +1150,9 @@ Distinguish lack of discovered reachability from actual proof under the tool's a
 
 ---
 
-# 16. Root Selection and Entry-Point Semantics
+## 16. Root Selection and Entry-Point Semantics
 
-## 16.1 Entry-point identification
+### 16.1 Entry-point identification
 
 Test:
 
@@ -1165,11 +1167,11 @@ Test:
 - Interrupt vectors.
 - Plugin entry points.
 
-## 16.2 Multiple roots
+### 16.2 Multiple roots
 
 Verify that reachability is computed from the complete root set.
 
-## 16.3 Hidden runtime roots
+### 16.3 Hidden runtime roots
 
 Investigate compiler and runtime initialization mechanisms.
 
@@ -1182,11 +1184,11 @@ Examples:
 - Linker-retained symbols.
 - Runtime callbacks.
 
-## 16.4 Externally invoked functions
+### 16.4 Externally invoked functions
 
 Determine whether exported or dynamically discovered functions must be treated as roots.
 
-## 16.5 Root configuration errors
+### 16.5 Root configuration errors
 
 Test invalid, missing, ambiguous, and duplicate root specifications.
 
@@ -1194,31 +1196,31 @@ The tool should fail clearly rather than silently produce incorrect output.
 
 ---
 
-# 17. Dead-Code Elimination Precision
+## 17. Dead-Code Elimination Precision
 
-## 17.1 Unused functions
+### 17.1 Unused functions
 
 Determine whether CodeCarver removes provably unreachable functions.
 
 Test direct, indirect, recursive, inline, template, and overloaded functions.
 
-## 17.2 Unused classes
+### 17.2 Unused classes
 
 Evaluate removal of classes that are not required by retained code.
 
 Consider nested declarations, template specializations, RTTI, and ABI constraints.
 
-## 17.3 Unused methods
+### 17.3 Unused methods
 
 Determine whether unused nonvirtual methods can be removed safely.
 
 Evaluate virtual methods separately.
 
-## 17.4 Unused global variables
+### 17.4 Unused global variables
 
 Inspect globals that have no required reads, writes, initialization side effects, or external visibility obligations.
 
-## 17.5 Unused types
+### 17.5 Unused types
 
 Test:
 
@@ -1232,29 +1234,29 @@ Test:
 
 Determine whether types are needed for compilation, layout, overload resolution, or template instantiation.
 
-## 17.6 Unused includes
+### 17.6 Unused includes
 
 Evaluate whether headers can be removed without breaking compilation.
 
 Do not assume a header is unnecessary merely because no directly referenced symbol appears to originate from it.
 
-## 17.7 Unused macros
+### 17.7 Unused macros
 
 Determine whether unused macro definitions can be removed safely.
 
 Account for conditional compilation and macro-generated source.
 
-## 17.8 Unused declarations
+### 17.8 Unused declarations
 
 Investigate whether redundant declarations can be removed while preserving valid name lookup and compilation.
 
-## 17.9 Partial retention
+### 17.9 Partial retention
 
 Evaluate whether CodeCarver unnecessarily preserves entire files or classes when only smaller portions are required.
 
 Identify safe opportunities for finer-grained carving.
 
-## 17.10 Minimality limits
+### 17.10 Minimality limits
 
 Document cases where exact minimal output is impractical or undecidable under the chosen analysis model.
 
@@ -1264,9 +1266,9 @@ Instead, evaluate whether the tool is as precise as reasonably possible within i
 
 ---
 
-# 18. Source Rewriting and Output Integrity
+## 18. Source Rewriting and Output Integrity
 
-## 18.1 Source-range correctness
+### 18.1 Source-range correctness
 
 Inspect how CodeCarver selects text to remove.
 
@@ -1283,11 +1285,11 @@ Test:
 - Conditional blocks.
 - Namespace boundaries.
 
-## 18.2 Token boundaries
+### 18.2 Token boundaries
 
 Ensure rewriting does not leave malformed tokens, punctuation, or declarations.
 
-## 18.3 Multiple declarators
+### 18.3 Multiple declarators
 
 Test constructs such as:
 
@@ -1295,55 +1297,55 @@ Test constructs such as:
 
 Determine whether removing one declarator preserves the others correctly.
 
-## 18.4 Class member removal
+### 18.4 Class member removal
 
 Test removal of methods and fields inside class definitions.
 
 Verify access specifiers, syntax, layout, and dependent declarations remain valid.
 
-## 18.5 Template rewriting
+### 18.5 Template rewriting
 
 Test partial removal inside template declarations and specializations.
 
-## 18.6 Macro rewriting
+### 18.6 Macro rewriting
 
 Determine whether source ranges originating from macro expansions are handled safely.
 
-## 18.7 Comments and formatting
+### 18.7 Comments and formatting
 
 Ensure comments, whitespace, and formatting do not cause incorrect deletion boundaries.
 
 Preserve meaningful comments and directives where required.
 
-## 18.8 Line directives and diagnostics
+### 18.8 Line directives and diagnostics
 
 Determine whether generated output retains useful source-location information.
 
-## 18.9 Output determinism
+### 18.9 Output determinism
 
 Repeated runs on identical inputs and configuration should produce equivalent, preferably byte-identical, output.
 
-## 18.10 Output compilation
+### 18.10 Output compilation
 
 Validate generated code using the intended compiler and build configuration.
 
-## 18.11 Output linking
+### 18.11 Output linking
 
 Validate all required symbols and libraries.
 
-## 18.12 Output execution
+### 18.12 Output execution
 
 Where practical, execute the carved program and compare its behavior with the original.
 
 ---
 
-# 19. Adversarial Test Generation
+## 19. Adversarial Test Generation
 
 Construct a comprehensive test corpus designed to break CodeCarver.
 
 Do not rely exclusively on existing tests.
 
-## 19.1 Minimal language-feature tests
+### 19.1 Minimal language-feature tests
 
 For each relevant C/C++ construct, create a minimal program containing:
 
@@ -1355,7 +1357,7 @@ For each relevant C/C++ construct, create a minimal program containing:
 - Expected compilation behavior.
 - Expected runtime behavior.
 
-## 19.2 Combined-feature tests
+### 19.2 Combined-feature tests
 
 Test interactions between features.
 
@@ -1374,7 +1376,7 @@ Examples:
 
 Many bugs arise from combinations rather than isolated features.
 
-## 19.3 Adversarial symbol naming
+### 19.3 Adversarial symbol naming
 
 Test:
 
@@ -1388,19 +1390,19 @@ Test:
 - Template specializations.
 - Mangled-name collisions or assumptions.
 
-## 19.4 Deep dependency chains
+### 19.4 Deep dependency chains
 
 Generate long chains of functions, types, templates, and global references.
 
 Verify complete reachability propagation.
 
-## 19.5 Cyclic dependencies
+### 19.5 Cyclic dependencies
 
 Generate strongly connected dependency graphs.
 
 Verify that reachable cycles are retained and unreachable cycles are removed.
 
-## 19.6 Large generated programs
+### 19.6 Large generated programs
 
 Generate synthetic C/C++ projects containing thousands of declarations and controlled dependency graphs.
 
@@ -1413,7 +1415,7 @@ Measure:
 - Scalability.
 - Error handling.
 
-## 19.7 Malformed input
+### 19.7 Malformed input
 
 Test:
 
@@ -1427,7 +1429,7 @@ Test:
 
 The tool must not silently treat parse failures as evidence that code is unnecessary.
 
-## 19.8 Metamorphic testing
+### 19.8 Metamorphic testing
 
 Create equivalent source variants that should produce equivalent carving decisions.
 
@@ -1444,7 +1446,7 @@ Examples:
 
 Investigate unexpected changes in retained-symbol sets.
 
-## 19.9 Differential testing
+### 19.9 Differential testing
 
 For each test program:
 
@@ -1459,7 +1461,7 @@ For each test program:
 
 Use sanitizers where appropriate.
 
-## 19.10 Mutation testing
+### 19.10 Mutation testing
 
 Deliberately mutate the analyzer or test inputs to determine whether the test suite detects incorrect reachability decisions.
 
@@ -1475,31 +1477,31 @@ A strong test suite should detect these defects.
 
 ---
 
-# 20. Testing Oracles and Ground Truth
+## 20. Testing Oracles and Ground Truth
 
-## 20.1 Known dependency graphs
+### 20.1 Known dependency graphs
 
 Generate programs from explicitly defined dependency graphs.
 
 Compare expected and actual reachability.
 
-## 20.2 Compiler-based validation
+### 20.2 Compiler-based validation
 
 Use compilation and linking as necessary checks.
 
 Do not treat them as sufficient proof of semantic correctness.
 
-## 20.3 Runtime comparison
+### 20.3 Runtime comparison
 
 Compare original and carved behavior under identical inputs and environments.
 
-## 20.4 Symbol-level comparison
+### 20.4 Symbol-level comparison
 
 Inspect generated symbols where useful.
 
 Compare expected retained and removed symbols.
 
-## 20.5 Coverage metrics
+### 20.5 Coverage metrics
 
 Measure:
 
@@ -1511,7 +1513,7 @@ Measure:
 - Error paths tested.
 - Build configurations tested.
 
-## 20.6 Precision metrics
+### 20.6 Precision metrics
 
 Where ground truth is available, measure:
 
@@ -1526,7 +1528,7 @@ Where ground truth is available, measure:
 
 Use explicit denominators and consistent definitions.
 
-## 20.7 Soundness reporting
+### 20.7 Soundness reporting
 
 Report false removals separately from excessive retention.
 
@@ -1534,17 +1536,17 @@ Never combine them into a single score that hides correctness failures.
 
 ---
 
-# 21. Error Handling and Conservative Fallbacks
+## 21. Error Handling and Conservative Fallbacks
 
-## 21.1 Parse failures
+### 21.1 Parse failures
 
 Determine whether failed translation units are clearly identified.
 
-## 21.2 Missing dependencies
+### 21.2 Missing dependencies
 
 Inspect behavior when headers, libraries, or build metadata are unavailable.
 
-## 21.3 Unsupported syntax
+### 21.3 Unsupported syntax
 
 Identify whether unsupported constructs trigger:
 
@@ -1554,19 +1556,19 @@ Identify whether unsupported constructs trigger:
 - Incorrect removal.
 - Silent failure.
 
-## 21.4 Unresolved symbols
+### 21.4 Unresolved symbols
 
 Determine whether unresolved references are preserved as uncertainty rather than discarded.
 
-## 21.5 Fallback granularity
+### 21.5 Fallback granularity
 
 Evaluate whether CodeCarver unnecessarily retains entire files or modules when only a smaller region is uncertain.
 
-## 21.6 Failure propagation
+### 21.6 Failure propagation
 
 Ensure errors in early pipeline stages cannot silently produce confident but incorrect removal decisions downstream.
 
-## 21.7 Diagnostic quality
+### 21.7 Diagnostic quality
 
 Every significant uncertainty should identify:
 
@@ -1579,7 +1581,7 @@ Every significant uncertainty should identify:
 
 ---
 
-# 22. Determinism and Reproducibility
+## 22. Determinism and Reproducibility
 
 Test repeated analysis with:
 
@@ -1599,7 +1601,7 @@ Investigate nondeterministic dependency graph construction and race conditions.
 
 ---
 
-# 23. Incremental Analysis and Cache Correctness
+## 23. Incremental Analysis and Cache Correctness
 
 If CodeCarver supports caching or incremental processing, inspect:
 
@@ -1619,7 +1621,7 @@ Compare incremental output against a clean full analysis.
 
 ---
 
-# 24. Security and Robustness
+## 24. Security and Robustness
 
 Treat analyzed source code and build metadata as potentially untrusted input.
 
@@ -1645,7 +1647,7 @@ Ensure analysis does not execute target program code merely to determine reachab
 
 ---
 
-# 25. Scalability and Performance
+## 25. Scalability and Performance
 
 Although correctness is the primary objective, evaluate performance on large projects.
 
@@ -1677,9 +1679,11 @@ Do not prioritize speed improvements over correctness defects.
 
 ---
 
-# 26. Required Review Procedure
+## 26. Required Review Procedure
 
-## Phase 1: Contract and architecture
+All of the steps below belong to Phase 1 (audit). They are numbered as steps so they are not confused with the audit and fix phases; do not change code while performing them.
+
+### Step 1: Contract and architecture
 
 1. Identify the intended carving guarantees.
 2. Identify supported C/C++ standards and extensions.
@@ -1690,7 +1694,7 @@ Do not prioritize speed improvements over correctness defects.
 7. Identify test infrastructure.
 8. Identify build configurations.
 
-## Phase 2: Parsing and symbol resolution
+### Step 2: Parsing and symbol resolution
 
 Review:
 
@@ -1703,7 +1707,7 @@ Review:
 - Translation-unit merging.
 - Compiler-generated constructs.
 
-## Phase 3: Dependency analysis
+### Step 3: Dependency analysis
 
 Review:
 
@@ -1718,7 +1722,7 @@ Review:
 - ABI dependencies.
 - Unknown references.
 
-## Phase 4: Reachability and pruning
+### Step 4: Reachability and pruning
 
 Review:
 
@@ -1730,7 +1734,7 @@ Review:
 - Conservative fallbacks.
 - Over-retention.
 
-## Phase 5: Output generation
+### Step 5: Output generation
 
 Review:
 
@@ -1743,19 +1747,19 @@ Review:
 - Linking.
 - Runtime behavior.
 
-## Phase 6: Adversarial testing
+### Step 6: Adversarial testing
 
 Generate targeted tests for every major language-feature category.
 
 Prioritize cases where required code is reachable only through non-obvious dependencies.
 
-## Phase 7: Cross-component investigation
+### Step 7: Cross-component investigation
 
 Trace failures across parsing, symbol resolution, graph construction, pruning, and rewriting.
 
 Do not assume a defect belongs to the stage where it becomes visible.
 
-## Phase 8: Completeness pass
+### Step 8: Completeness pass
 
 Revisit every major category and actively search for cases not covered by existing tests.
 
@@ -1763,9 +1767,9 @@ Maintain a persistent review ledger.
 
 ---
 
-# 27. Finding Classification
+## 27. Finding Classification
 
-## Critical
+#### Critical
 
 - Required code removed silently.
 - Incorrect semantic behavior in generated output.
@@ -1773,7 +1777,7 @@ Maintain a persistent review ledger.
 - Silent analysis failure resulting in unsafe carving.
 - Generated code that appears valid but violates the preservation contract.
 
-## High
+#### High
 
 - Incorrect handling of major C/C++ constructs.
 - Missing cross-translation-unit dependencies.
@@ -1782,7 +1786,7 @@ Maintain a persistent review ledger.
 - Major unnecessary retention.
 - Unsafe source rewriting.
 
-## Medium
+#### Medium
 
 - Overly conservative retention in specific constructs.
 - Limited symbol-resolution defects.
@@ -1791,7 +1795,7 @@ Maintain a persistent review ledger.
 - Incremental analysis inconsistencies.
 - Determinism problems without semantic consequences.
 
-## Low
+#### Low
 
 - Minor output bloat.
 - Small missed elimination opportunities.
@@ -1802,7 +1806,7 @@ Severity should reflect real correctness risk, affected scope, and practical imp
 
 ---
 
-# 28. Required Finding Format
+## 28. Required Finding Format
 
 For every finding, provide:
 
@@ -1850,9 +1854,9 @@ Clearly label suspected issues that have not been reproduced.
 
 ---
 
-# 29. Required Final Report
+## 29. Required Final Report
 
-## A. Executive Summary
+### A. Executive Summary
 
 Include:
 
@@ -1863,11 +1867,11 @@ Include:
 - Confidence in conclusions.
 - Limitations of available evidence.
 
-## B. Architecture Overview
+### B. Architecture Overview
 
 Describe the parsing, dependency analysis, reachability, pruning, and rewriting architecture.
 
-## C. Ranked Findings
+### C. Ranked Findings
 
 Provide:
 
@@ -1876,55 +1880,65 @@ Provide:
 
 Prioritize correctness defects before output-size improvements.
 
-## D. Detailed Findings
+### D. Detailed Findings
 
 Include the complete finding format from Section 28.
 
-## E. False-Removal Risks
+### E. False-Removal Risks
 
 Group all findings that could remove required code.
 
 Explain triggering conditions and expected consequences.
 
-## F. Excessive-Retention Opportunities
+### F. Excessive-Retention Opportunities
 
 Group all findings where CodeCarver preserves more code than necessary.
 
 Estimate retained declarations, files, or source bytes where practical.
 
-## G. Parsing and Language Coverage Gaps
+### G. Parsing and Language Coverage Gaps
 
 Identify unsupported or incompletely supported C/C++ constructs.
 
-## H. Dependency Graph Improvements
+### H. Dependency Graph Improvements
 
 Recommend missing edge types, improved symbol identity, better indirect-call analysis, and more precise uncertainty tracking.
 
-## I. Source Rewriting Improvements
+### I. Source Rewriting Improvements
 
 Identify changes needed for safer and more precise output generation.
 
-## J. Adversarial Test Corpus
+### J. Adversarial Test Corpus
 
 List proposed and executed test cases.
 
 Include expected results and coverage categories.
 
-## K. Architectural Recommendations
+### K. Architectural Recommendations
 
 Identify major changes that could improve soundness, precision, diagnostics, and maintainability.
 
-## L. Coverage Report
+### L. Coverage Report
 
 List every reviewed subsystem, important file, and language-feature category.
 
-## M. Remaining Unknowns
+### M. Remaining Unknowns
 
 Identify questions requiring additional testing, compiler-specific analysis, or runtime validation.
 
+### N. Fixes Applied
+
+Written in Phase 2 (Section 32). For each finding ID:
+
+- The fix that was applied.
+- The regression test that failed before the fix and passes after it.
+- The test-suite and ground-truth / oracle results after the fix.
+
+Also list every deferred finding with the reason, and anything discovered while fixing.
+
 ---
 
-# 30. Deep-Review Questions
+## 30. Deep-Review Questions
 
 After the initial review, explicitly investigate:
 
@@ -1966,7 +1980,7 @@ Do not merely answer these questions from intuition. Inspect the implementation 
 
 ---
 
-# 31. Completion Criteria
+## 31. Completion Criteria
 
 The review is complete only when:
 
@@ -1992,14 +2006,15 @@ The review is complete only when:
 20. Findings have been prioritized.
 21. A final adversarial completeness pass has been performed.
 22. Remaining limitations have been explicitly documented.
+23. Phase 2: every confirmed finding fixed and verified, or deferred with a reason, and the Fixes Applied section written.
 
 Do not claim complete coverage if important components or language features remain unexamined.
 
-If the investigation spans multiple sessions, preserve a persistent review ledger recording coverage, findings, tests, and unresolved questions.
+If the investigation spans multiple sessions, preserve a persistent review ledger recording coverage, findings, tests, unresolved questions, and — during Phase 2 — which findings have been fixed or deferred.
 
 ---
 
-# 32. Phase 2 — Fix What the Audit Found
+## 32. Phase 2 — Fix What the Audit Found
 
 Only after the Phase 1 report is complete, fix the confirmed findings. Do not start fixing while still auditing — the complete, ranked list is what keeps effort on the highest-value problems instead of the first ones found.
 
@@ -2012,11 +2027,11 @@ Work through the findings in priority order. For each fix:
 
 Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to CodeCarver's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
 
-When finished, update the report with a **Fixes Applied** section: what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
+When finished, update the report with the **Fixes Applied** section (Section 29, N): what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
 
 ---
 
-# 33. Final Instruction
+## 33. Final Instruction
 
 **The purpose of CodeCarver is not merely to produce smaller source code. It is to remove code that is provably unnecessary while preserving everything required by the selected program semantics.**
 
@@ -2026,7 +2041,7 @@ Treat excessive retention as a precision defect.
 
 Treat unresolved dependencies as uncertainty, not evidence of dead code.
 
-Prefer improving the analyzer's understanding of C/C++ semantics over blanket retention rules that conceal analysis weaknesses.
+Prefer improving the analyzer's understanding of C/C++ semantics over blanket retention rules — without making the carve unsound; when a target can't be resolved, keeping the candidate set is correct.
 
 Focus particularly on non-obvious dependencies created by templates, virtual dispatch, implicit constructors and destructors, global initialization, function pointers, macros, cross-translation-unit linkage, and compiler-generated behavior.
 

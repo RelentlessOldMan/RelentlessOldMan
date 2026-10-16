@@ -1418,7 +1418,9 @@ Every suspected issue must be evaluated in context.
 
 # 21. Required Investigation Procedure
 
-## Phase 1: Architecture and workload inventory
+All seven steps below are part of Phase 1 (audit); do not change code while working through them.
+
+## 21.1 Step 1: Architecture and workload inventory
 
 1. Map the application architecture.
 2. Identify computationally intensive subsystems.
@@ -1433,7 +1435,7 @@ Every suspected issue must be evaluated in context.
 
 Produce an overview of where CPU time is likely consumed.
 
-## Phase 2: Establish measurements
+## 21.2 Step 2: Establish measurements
 
 Where practical:
 
@@ -1452,7 +1454,7 @@ Use sampling profilers for broad discovery and instrumentation where precise cou
 
 Avoid relying exclusively on wall-clock timing.
 
-## Phase 3: Systematic source review
+## 21.3 Step 3: Systematic source review
 
 Review every relevant module.
 
@@ -1473,7 +1475,7 @@ For each module, investigate:
 
 Maintain a persistent coverage ledger.
 
-## Phase 4: Cross-component analysis
+## 21.4 Step 4: Cross-component analysis
 
 Investigate inefficiencies spanning multiple modules.
 
@@ -1489,7 +1491,7 @@ Examples:
 
 Trace complete execution paths.
 
-## Phase 5: Quantitative analysis
+## 21.5 Step 5: Quantitative analysis
 
 For each significant finding:
 
@@ -1503,7 +1505,7 @@ For each significant finding:
 8. Evaluate correctness risks.
 9. Define validation measurements.
 
-## Phase 6: Prioritization
+## 21.6 Step 6: Prioritization
 
 Rank findings by:
 
@@ -1518,7 +1520,7 @@ Rank findings by:
 
 Prioritize high-impact, low-risk changes.
 
-## Phase 7: Completeness pass
+## 21.7 Step 7: Completeness pass
 
 Revisit:
 
@@ -1708,6 +1710,13 @@ Provide:
 
 Separate measured improvements from theoretical estimates.
 
+Present this in two parts:
+
+- **Phase 1 estimates:** the projected savings written at audit time, before any code changed.
+- **Phase 2 measured results:** the before/after numbers actually obtained for the fixes applied (see section K), with fixes labeled "unmeasured" kept separate from measured ones.
+
+Do not overwrite the Phase 1 estimates with the Phase 2 results; keeping both shows how accurate the estimates were.
+
 ## H. Benchmark and Validation Plan
 
 Describe:
@@ -1742,11 +1751,21 @@ Document issues requiring:
 - Concurrency testing.
 - Additional architectural investigation.
 
+## K. Fixes Applied
+
+Written in Phase 2. For each finding ID, record:
+
+- The fix made.
+- The before/after measurement, or the regression test that proves the behavior is unchanged when no measurement was possible (label such fixes "unmeasured").
+- Fixes implemented and then reverted because the measured gain was negligible or within noise.
+- Findings deferred, with the reason (high risk, speculative, unverifiable, architectural, or behavior-changing).
+- Anything discovered while fixing, including new findings and corrections to Phase 1 estimates.
+
 ---
 
 # 25. Benchmarking Requirements
 
-For every implemented optimization, eventual validation should include:
+In Phase 2, validate every implemented optimization with:
 
 1. Identical input workloads.
 2. Identical correctness requirements.
@@ -1777,6 +1796,8 @@ Account for:
 - Memory bandwidth.
 - Operating system scheduling.
 - Debugger and profiler overhead.
+
+Keep benchmarks and stress runs bounded in input size and duration. Write generated test data and benchmark output to a temporary location outside the repository, and delete it when finished.
 
 A change is not automatically successful because a microbenchmark improves.
 
@@ -1901,6 +1922,7 @@ Continue until:
 15. Findings have been prioritized.
 16. A final completeness pass has been completed.
 17. Remaining uncertainties have been documented.
+18. Phase 2: every confirmed finding has been fixed and verified, reverted, or deferred with a reason, and the Fixes Applied section has been written.
 
 If repository access, tooling, runtime measurements, or context limits prevent full coverage, document exactly what remains.
 
@@ -1916,6 +1938,8 @@ Only after the Phase 1 report is complete, fix the confirmed findings. Do not st
 
 Work through the findings in priority order. For each fix:
 
+- If Phase 1 had no runtime baseline, first build a minimal benchmark for the target path so there is something to measure against. If that is impractical, apply only fixes whose benefit is clear from complexity on known-large inputs and whose behavior is proven by tests, and label them "unmeasured" in Fixes Applied.
+- Keep benchmarks and stress runs bounded in input size and duration; write generated data and benchmark output to a temporary location outside the repository, and clean it up afterwards.
 - Re-measure after the fix using the same baseline method as Phase 1 and record before/after numbers. If the measured gain is negligible or within noise, revert it and record that in the report.
 - Confirm behavior is unchanged: the existing tests pass, and add a test wherever the optimization touches logic that is not already covered.
 - Keep each fix small and focused; do not bundle unrelated changes.
@@ -1923,7 +1947,7 @@ Work through the findings in priority order. For each fix:
 
 Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the program's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
 
-When finished, update the report with a **Fixes Applied** section: what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
+When finished, update the report with the **Fixes Applied** section (section K of the final report): what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
 
 ---
 

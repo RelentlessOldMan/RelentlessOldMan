@@ -12,9 +12,11 @@ Do not limit the review to conventional memory leaks. Many of the largest opport
 
 Review all relevant source code, configuration, data structures, algorithms, caches, object lifetimes, resource management, and architectural decisions.
 
-Be aggressive in identifying inefficiencies but conservative in recommending changes that might affect correctness.
+Be aggressive in identifying inefficiencies but conservative in recommending or making changes that might affect correctness.
 
 This review has two phases. **Phase 1 — audit:** do not modify code until the audit is complete; produce a detailed, actionable report with supporting evidence, estimated savings, risk assessments, and validation recommendations. **Phase 2 — fix:** then fix the confirmed findings in priority order, with evidence for each (see the Phase 2 section near the end).
+
+**Safety:** keep memory stress runs, soak tests, and large-workload benchmarks bounded (cap input sizes, iteration counts, concurrency, and run time) so they cannot exhaust the machine's RAM or drive it into heavy paging. Write any generated test data to a temporary directory and delete it when finished.
 
 ---
 
@@ -110,9 +112,9 @@ A lower-memory implementation is not automatically better if it introduces signi
 
 ---
 
-# 3. Object Lifetime and Retention Analysis
+## 3. Object Lifetime and Retention Analysis
 
-## 3.1 Unnecessarily long-lived objects
+### 3.1 Unnecessarily long-lived objects
 
 Find objects retained beyond their useful lifetime.
 
@@ -137,7 +139,7 @@ For each long-lived object, determine whether all referenced objects genuinely r
 
 Look for large object graphs retained by a single reference.
 
-## 3.2 Accidental retention
+### 3.2 Accidental retention
 
 Identify cases where small references keep large allocations alive.
 
@@ -154,7 +156,7 @@ Examples:
 
 Trace retention chains to their roots.
 
-## 3.3 Delayed cleanup
+### 3.3 Delayed cleanup
 
 Inspect whether resources are released promptly after their last use.
 
@@ -173,7 +175,7 @@ Check:
 
 Investigate cleanup that depends on unrelated future activity.
 
-## 3.4 Hidden references
+### 3.4 Hidden references
 
 Look for references retained by:
 
@@ -196,9 +198,9 @@ Determine whether large local variables remain reachable for longer than necessa
 
 ---
 
-# 4. Duplicate Data and Redundant Representations
+## 4. Duplicate Data and Redundant Representations
 
-## 4.1 Duplicate objects
+### 4.1 Duplicate objects
 
 Identify cases where logically identical data exists in multiple independently allocated objects.
 
@@ -215,7 +217,7 @@ Examples:
 
 Determine whether immutable sharing, canonicalization, or interning is appropriate.
 
-## 4.2 Multiple representations of the same data
+### 4.2 Multiple representations of the same data
 
 Find situations where the application simultaneously retains:
 
@@ -232,7 +234,7 @@ Determine whether all representations must coexist.
 
 Investigate whether one can be regenerated cheaply or discarded after conversion.
 
-## 4.3 Unnecessary copying
+### 4.3 Unnecessary copying
 
 Review:
 
@@ -251,7 +253,7 @@ Determine whether views, slices, spans, immutable sharing, or ownership transfer
 
 Account for aliasing, mutation, and lifetime hazards.
 
-## 4.4 Copy amplification
+### 4.4 Copy amplification
 
 Identify workflows where data is repeatedly copied through several processing stages.
 
@@ -267,9 +269,9 @@ Look for ways to reduce the number of simultaneously live representations.
 
 ---
 
-# 5. Collection and Container Efficiency
+## 5. Collection and Container Efficiency
 
-## 5.1 Excess collection capacity
+### 5.1 Excess collection capacity
 
 Inspect all significant:
 
@@ -296,7 +298,7 @@ Evaluate whether shrinking, rebuilding, or more accurate initial sizing would he
 
 Avoid repeated resizing that introduces unnecessary allocation and copying.
 
-## 5.2 Oversized initial capacities
+### 5.2 Oversized initial capacities
 
 Identify collections allocated for hypothetical worst-case workloads when actual usage is consistently much smaller.
 
@@ -309,7 +311,7 @@ Examples:
 
 Recommend sizing based on measured workloads where appropriate.
 
-## 5.3 Inefficient container choices
+### 5.3 Inefficient container choices
 
 Evaluate whether each container matches its usage pattern.
 
@@ -327,7 +329,7 @@ Consider:
 
 Consider lookup complexity, update frequency, ordering, and iteration performance.
 
-## 5.4 Excessive per-element overhead
+### 5.4 Excessive per-element overhead
 
 Identify structures where container overhead is large relative to payload size.
 
@@ -346,7 +348,7 @@ Inspect:
 
 Estimate overhead per element and multiply by actual cardinality.
 
-## 5.5 Nested containers
+### 5.5 Nested containers
 
 Look for deeply nested collection structures that create many small allocations.
 
@@ -360,7 +362,7 @@ Examples:
 
 Consider flattening, compact indexing, contiguous storage, or shared metadata.
 
-## 5.6 Empty collections
+### 5.6 Empty collections
 
 Identify eagerly allocated empty containers.
 
@@ -373,7 +375,7 @@ Consider:
 
 Pay special attention when millions of objects each own an empty collection.
 
-## 5.7 Duplicate indexes
+### 5.7 Duplicate indexes
 
 Identify multiple lookup structures that duplicate keys, references, or entire records.
 
@@ -383,9 +385,9 @@ Evaluate memory-versus-query-speed tradeoffs.
 
 ---
 
-# 6. Object Layout and Per-Instance Overhead
+## 6. Object Layout and Per-Instance Overhead
 
-## 6.1 Large populations of small objects
+### 6.1 Large populations of small objects
 
 Identify types instantiated in very large quantities.
 
@@ -404,7 +406,7 @@ For each significant type, inspect:
 
 Estimate the total memory footprint of the population, including referenced objects.
 
-## 6.2 Compact representations
+### 6.2 Compact representations
 
 Consider replacing:
 
@@ -419,7 +421,7 @@ Consider replacing:
 
 Validate range limits and compatibility.
 
-## 6.3 Structure packing and alignment
+### 6.3 Structure packing and alignment
 
 For native structures and value types, examine:
 
@@ -436,7 +438,7 @@ Estimate savings from safe reordering or representation changes.
 
 Do not recommend packed unaligned layouts without accounting for performance and platform constraints.
 
-## 6.4 Overly general object models
+### 6.4 Overly general object models
 
 Identify cases where a flexible, heavyweight object hierarchy is used for simple data.
 
@@ -444,7 +446,7 @@ Consider whether compact records, value types, arrays, or tagged unions could re
 
 Evaluate the number of objects and references required to represent one logical entity.
 
-## 6.5 Redundant fields
+### 6.5 Redundant fields
 
 Find fields that:
 
@@ -460,9 +462,9 @@ Determine whether they can be removed or relocated.
 
 ---
 
-# 7. Strings and Text Processing
+## 7. Strings and Text Processing
 
-## 7.1 Repeated strings
+### 7.1 Repeated strings
 
 Look for repeated:
 
@@ -479,7 +481,7 @@ Determine whether shared immutable values or integer identifiers are appropriate
 
 Avoid unbounded global string interning.
 
-## 7.2 Excessive string construction
+### 7.2 Excessive string construction
 
 Identify:
 
@@ -493,7 +495,7 @@ Identify:
 
 Evaluate allocation-free formatting, reusable builders, and slices where supported.
 
-## 7.3 Text representation overhead
+### 7.3 Text representation overhead
 
 Inspect whether large quantities of text are stored inefficiently.
 
@@ -509,7 +511,7 @@ Consider:
 
 Account for encoding requirements and access patterns.
 
-## 7.4 Logging-related strings
+### 7.4 Logging-related strings
 
 Find expensive strings constructed even when logging is disabled.
 
@@ -525,9 +527,9 @@ Prefer deferred formatting and bounded diagnostic retention.
 
 ---
 
-# 8. Buffers and Temporary Memory
+## 8. Buffers and Temporary Memory
 
-## 8.1 Oversized buffers
+### 8.1 Oversized buffers
 
 Identify buffers sized for rare maximum inputs rather than typical usage.
 
@@ -544,7 +546,7 @@ Inspect:
 
 Measure typical and peak utilization.
 
-## 8.2 Simultaneously live buffers
+### 8.2 Simultaneously live buffers
 
 Trace processing stages to determine whether multiple full-size buffers coexist unnecessarily.
 
@@ -557,7 +559,7 @@ Look for opportunities to:
 - Perform in-place transformations.
 - Release prior-stage buffers earlier.
 
-## 8.3 Buffer pooling
+### 8.3 Buffer pooling
 
 Evaluate whether frequently allocated temporary buffers would benefit from pooling.
 
@@ -577,7 +579,7 @@ Do not recommend pooling by default.
 
 A pool that retains large buffers indefinitely may increase baseline memory substantially.
 
-## 8.4 Stack versus heap allocation
+### 8.4 Stack versus heap allocation
 
 For native code, inspect small, bounded, short-lived allocations.
 
@@ -585,7 +587,7 @@ Consider stack allocation when safe and appropriate.
 
 Avoid large or input-controlled stack allocations.
 
-## 8.5 Temporary arrays and intermediate results
+### 8.5 Temporary arrays and intermediate results
 
 Find algorithms that allocate complete intermediate arrays where incremental processing would suffice.
 
@@ -605,9 +607,9 @@ Estimate peak temporary memory, not just final output size.
 
 ---
 
-# 9. Caches and Memoization
+## 9. Caches and Memoization
 
-## 9.1 Cache inventory
+### 9.1 Cache inventory
 
 Identify every cache, including implicit caches.
 
@@ -627,7 +629,7 @@ For each cache, document:
 - Concurrency behavior.
 - Whether entries are duplicated elsewhere.
 
-## 9.2 Unbounded caches
+### 9.2 Unbounded caches
 
 Flag caches without effective memory limits.
 
@@ -643,7 +645,7 @@ Investigate caches that grow with:
 
 Recommend bounded policies where appropriate.
 
-## 9.3 Low-value cached entries
+### 9.3 Low-value cached entries
 
 Identify entries that consume substantial memory but are rarely reused.
 
@@ -658,7 +660,7 @@ Consider eviction based on:
 
 A cache should justify its retained footprint.
 
-## 9.4 Oversized cached values
+### 9.4 Oversized cached values
 
 Find caches storing complete objects when callers only need a small derived result.
 
@@ -670,7 +672,7 @@ Consider storing:
 - Compressed representations.
 - References to canonical objects.
 
-## 9.5 Duplicate caching
+### 9.5 Duplicate caching
 
 Identify multiple components caching identical or overlapping data.
 
@@ -678,7 +680,7 @@ Trace ownership and consistency requirements.
 
 Determine whether sharing one cache is safe and beneficial.
 
-## 9.6 Cache lifecycle
+### 9.6 Cache lifecycle
 
 Inspect whether caches are cleared or reduced when:
 
@@ -689,13 +691,13 @@ Inspect whether caches are cleared or reduced when:
 - Data becomes obsolete.
 - Memory pressure increases.
 
-## 9.7 Cache key overhead
+### 9.7 Cache key overhead
 
 Evaluate whether cache keys consume disproportionate memory.
 
 Consider compact hashes or identifiers only when collisions are handled correctly.
 
-## 9.8 Memoization explosions
+### 9.8 Memoization explosions
 
 Inspect recursive and dynamic-programming algorithms.
 
@@ -707,9 +709,9 @@ Consider bounded, scoped, or selective memoization.
 
 ---
 
-# 10. Concurrency and Per-Worker Memory
+## 10. Concurrency and Per-Worker Memory
 
-## 10.1 Per-thread allocations
+### 10.1 Per-thread allocations
 
 Inspect:
 
@@ -723,7 +725,7 @@ Inspect:
 
 Estimate memory as a function of worker count.
 
-## 10.2 Excessive concurrency
+### 10.2 Excessive concurrency
 
 Determine whether the number of simultaneous workers causes unnecessary multiplication of memory.
 
@@ -737,7 +739,7 @@ Examples:
 
 Consider shared immutable state, bounded concurrency, or worker reuse.
 
-## 10.3 Queued work
+### 10.3 Queued work
 
 Inspect queues for:
 
@@ -751,7 +753,7 @@ Inspect queues for:
 
 Estimate memory under producer-consumer imbalance.
 
-## 10.4 Async operations
+### 10.4 Async operations
 
 Find suspended tasks retaining large state.
 
@@ -767,7 +769,7 @@ Inspect:
 
 Determine whether concurrency limits or smaller state objects could reduce peak memory.
 
-## 10.5 Parallel algorithm memory amplification
+### 10.5 Parallel algorithm memory amplification
 
 Identify algorithms that replicate large state for each parallel branch.
 
@@ -779,9 +781,9 @@ Investigate immutable sharing, copy-on-write, compact deltas, and reduced branch
 
 ---
 
-# 11. Algorithmic Memory Complexity
+## 11. Algorithmic Memory Complexity
 
-## 11.1 Analyze space complexity
+### 11.1 Analyze space complexity
 
 For each memory-intensive algorithm, determine:
 
@@ -796,7 +798,7 @@ For each memory-intensive algorithm, determine:
 
 Look for avoidable O(N²) or worse memory usage.
 
-## 11.2 Full-state cloning
+### 11.2 Full-state cloning
 
 Pay special attention to algorithms that repeatedly clone complete application or simulation state.
 
@@ -814,7 +816,7 @@ Investigate whether copies can be replaced by:
 
 Assess the correctness and implementation complexity of each approach.
 
-## 11.3 Search and simulation workloads
+### 11.3 Search and simulation workloads
 
 Inspect:
 
@@ -831,7 +833,7 @@ Identify memory wasted by storing complete states, redundant histories, repeated
 
 Evaluate whether a compact state representation could reduce both RAM consumption and allocation pressure.
 
-## 11.4 Batch processing
+### 11.4 Batch processing
 
 Determine whether entire datasets are loaded into memory when streaming or chunking would suffice.
 
@@ -844,7 +846,7 @@ Evaluate:
 - Random-access requirements.
 - Input/output overlap.
 
-## 11.5 Recomputable data
+### 11.5 Recomputable data
 
 Identify large retained derived structures that can be regenerated inexpensively.
 
@@ -854,11 +856,11 @@ Avoid blindly trading substantial CPU time for small RAM reductions.
 
 ---
 
-# 12. Managed Runtime and Garbage Collection
+## 12. Managed Runtime and Garbage Collection
 
 Apply this section when relevant to languages such as C#, Java, Go, JavaScript, or Python.
 
-## 12.1 Allocation hotspots
+### 12.1 Allocation hotspots
 
 Find frequently executed paths that allocate unnecessarily.
 
@@ -879,7 +881,7 @@ Inspect:
 
 Distinguish allocation-rate reductions from actual retained-memory savings.
 
-## 12.2 Large object allocations
+### 12.2 Large object allocations
 
 Inspect allocations large enough to enter special large-object allocation regions where applicable.
 
@@ -892,13 +894,13 @@ Investigate:
 - Fragmentation.
 - Pooling behavior.
 
-## 12.3 Boxing and wrappers
+### 12.3 Boxing and wrappers
 
 Find cases where value types are unnecessarily boxed or wrapped in heap objects.
 
 Evaluate generic alternatives and compact representations.
 
-## 12.4 Garbage collection roots
+### 12.4 Garbage collection roots
 
 Trace retained objects through:
 
@@ -912,13 +914,13 @@ Trace retained objects through:
 
 Distinguish legitimate retention from accidental retention.
 
-## 12.5 Finalization and disposal
+### 12.5 Finalization and disposal
 
 Inspect objects requiring deterministic cleanup.
 
 Check whether finalizers, cleaners, or delayed disposal keep objects and resources alive unnecessarily.
 
-## 12.6 Heap growth and reuse
+### 12.6 Heap growth and reuse
 
 Determine whether apparent memory growth is caused by:
 
@@ -931,7 +933,7 @@ Determine whether apparent memory growth is caused by:
 
 Do not classify runtime-reserved memory as leaked without evidence.
 
-## 12.7 Language-specific concerns
+### 12.7 Language-specific concerns
 
 For C#/.NET, inspect:
 
@@ -1003,11 +1005,11 @@ For Go, inspect:
 
 ---
 
-# 13. Native Memory and Resource Management
+## 13. Native Memory and Resource Management
 
 Apply where relevant to C, C++, Rust, native libraries, and interop.
 
-## 13.1 Allocation ownership
+### 13.1 Allocation ownership
 
 Trace ownership of every significant dynamic allocation.
 
@@ -1022,7 +1024,7 @@ Look for:
 - Exception-path leaks.
 - Partial initialization leaks.
 
-## 13.2 Smart pointer overhead
+### 13.2 Smart pointer overhead
 
 Inspect whether reference-counted ownership is used unnecessarily.
 
@@ -1030,7 +1032,7 @@ Consider whether unique ownership, borrowed references, or stable IDs are more a
 
 Do not replace safe ownership models without proving lifetime correctness.
 
-## 13.3 Allocator overhead
+### 13.3 Allocator overhead
 
 Evaluate workloads involving many small allocations.
 
@@ -1045,13 +1047,13 @@ Consider:
 
 Assess allocator retention and fragmentation.
 
-## 13.4 Fragmentation
+### 13.4 Fragmentation
 
 Investigate mixed-size allocation patterns and long-lived allocations interspersed with short-lived allocations.
 
 Determine whether allocation lifetime grouping could improve reuse.
 
-## 13.5 Memory mappings
+### 13.5 Memory mappings
 
 Inspect:
 
@@ -1065,7 +1067,7 @@ Inspect:
 
 Distinguish mapped virtual memory from resident physical pages.
 
-## 13.6 Native interop
+### 13.6 Native interop
 
 Inspect:
 
@@ -1079,33 +1081,33 @@ Inspect:
 
 ---
 
-# 14. Serialization, Parsing, and Data Loading
+## 14. Serialization, Parsing, and Data Loading
 
-## 14.1 Whole-document loading
+### 14.1 Whole-document loading
 
 Identify code that reads complete files or messages into memory unnecessarily.
 
 Consider streaming parsers and incremental processing.
 
-## 14.2 Repeated parsing
+### 14.2 Repeated parsing
 
 Find data parsed multiple times.
 
 Determine whether parsed structures should be shared, reused, or discarded sooner.
 
-## 14.3 Oversized object models
+### 14.3 Oversized object models
 
 Evaluate whether deserialization creates heavyweight object graphs for data that is only partially consumed.
 
 Consider selective parsing or compact representations.
 
-## 14.4 Serialization buffers
+### 14.4 Serialization buffers
 
 Inspect whether serializers retain both complete input objects and complete output buffers simultaneously.
 
 Investigate streaming and chunked output.
 
-## 14.5 Data loading lifecycle
+### 14.5 Data loading lifecycle
 
 Determine whether temporary loading structures remain alive after initialization.
 
@@ -1120,7 +1122,7 @@ Examples:
 
 ---
 
-# 15. Diagnostics, Logging, and Development Features
+## 15. Diagnostics, Logging, and Development Features
 
 Identify memory consumed by:
 
@@ -1145,7 +1147,7 @@ Do not recommend removing diagnostics required for reliability or incident inves
 
 ---
 
-# 16. Initialization and Idle Memory
+## 16. Initialization and Idle Memory
 
 Investigate memory allocated before it is actually needed.
 
@@ -1168,7 +1170,7 @@ Determine whether startup peaks can be reduced by releasing intermediate state e
 
 ---
 
-# 17. Long-Running Application Behavior
+## 17. Long-Running Application Behavior
 
 Analyze repeated operations and extended runtime.
 
@@ -1191,7 +1193,7 @@ Inspect failure, cancellation, timeout, and retry paths separately from successf
 
 ---
 
-# 18. Peak Memory and Workload Overlap
+## 18. Peak Memory and Workload Overlap
 
 Analyze worst-case simultaneous memory demand.
 
@@ -1213,7 +1215,7 @@ Explicitly distinguish peak reduction from steady-state reduction.
 
 ---
 
-# 19. Operating System and Runtime-Level Considerations
+## 19. Operating System and Runtime-Level Considerations
 
 Where applicable, investigate:
 
@@ -1237,7 +1239,7 @@ Do not mistake reduced reported RSS after forced trimming for reduced applicatio
 
 ---
 
-# 20. Suspicious Patterns to Search For
+## 20. Suspicious Patterns to Search For
 
 Systematically search the codebase for patterns such as:
 
@@ -1280,9 +1282,11 @@ These are search targets, not automatic findings. Every suspected issue must be 
 
 ---
 
-# 21. Required Investigation Procedure
+## 21. Required Investigation Procedure
 
-## Phase 1: Architecture and memory inventory
+All of the steps below belong to Phase 1 (audit). They are numbered as steps so they are not confused with the audit and fix phases; do not change code while performing them.
+
+### Step 1: Architecture and memory inventory
 
 1. Map the application architecture.
 2. Identify long-lived components.
@@ -1297,7 +1301,7 @@ These are search targets, not automatic findings. Every suspected issue must be 
 
 Produce a memory ownership and lifetime overview.
 
-## Phase 2: Systematic source review
+### Step 2: Systematic source review
 
 Review every relevant module.
 
@@ -1319,7 +1323,7 @@ Do not stop after finding a few obvious issues.
 
 Maintain a coverage ledger recording which modules, files, and subsystems have been reviewed.
 
-## Phase 3: Cross-component analysis
+### Step 3: Cross-component analysis
 
 Investigate inefficiencies that cannot be identified within one file.
 
@@ -1333,7 +1337,7 @@ Examples:
 
 Trace complete data flows and ownership boundaries.
 
-## Phase 4: Quantitative analysis
+### Step 4: Quantitative analysis
 
 For each significant finding:
 
@@ -1348,7 +1352,7 @@ For each significant finding:
 
 Prefer measured values where possible.
 
-## Phase 5: Prioritization
+### Step 5: Prioritization
 
 Rank findings using:
 
@@ -1363,7 +1367,7 @@ Rank findings using:
 
 Prioritize changes that deliver large, reliable reductions with limited complexity.
 
-## Phase 6: Completeness pass
+### Step 6: Completeness pass
 
 After reviewing all modules, perform another pass focused on missed opportunities.
 
@@ -1382,11 +1386,11 @@ Do not assume the first review pass is complete.
 
 ---
 
-# 22. Finding Classification
+## 22. Finding Classification
 
 Assign every finding a severity.
 
-### Critical
+#### Critical
 
 Examples:
 
@@ -1396,7 +1400,7 @@ Examples:
 - Severe per-worker duplication.
 - Major algorithmic memory amplification.
 
-### High
+#### High
 
 Examples:
 
@@ -1406,7 +1410,7 @@ Examples:
 - Large unnecessary state copies.
 - Major peak-memory spikes.
 
-### Medium
+#### Medium
 
 Examples:
 
@@ -1416,7 +1420,7 @@ Examples:
 - Avoidable intermediate allocations.
 - Excessive temporary buffers.
 
-### Low
+#### Low
 
 Examples:
 
@@ -1429,7 +1433,7 @@ Severity must reflect actual impact, not merely the presence of a suspicious cod
 
 ---
 
-# 23. Required Finding Format
+## 23. Required Finding Format
 
 For every finding, provide:
 
@@ -1471,11 +1475,11 @@ Every recommendation must be tied to a concrete mechanism.
 
 ---
 
-# 24. Required Final Report
+## 24. Required Final Report
 
 Organize the final report into the following sections.
 
-## A. Executive Summary
+### A. Executive Summary
 
 Include:
 
@@ -1486,7 +1490,7 @@ Include:
 - Confidence in the conclusions.
 - Limitations of available evidence.
 
-## B. Memory Architecture Overview
+### B. Memory Architecture Overview
 
 Describe:
 
@@ -1498,7 +1502,7 @@ Describe:
 - Memory-heavy processing phases.
 - Parallel memory amplification.
 
-## C. Ranked Findings
+### C. Ranked Findings
 
 Provide a table containing:
 
@@ -1509,11 +1513,11 @@ Order primarily by expected practical impact.
 
 Do not add overlapping savings estimates together without accounting for shared allocations and dependencies.
 
-## D. Detailed Findings
+### D. Detailed Findings
 
 Include the complete finding format from Section 23 for every meaningful issue.
 
-## E. Quick Wins
+### E. Quick Wins
 
 Identify changes that:
 
@@ -1522,7 +1526,7 @@ Identify changes that:
 - Require limited refactoring.
 - Have credible measurable savings.
 
-## F. Major Architectural Opportunities
+### F. Major Architectural Opportunities
 
 Identify larger changes that could materially reduce RAM consumption.
 
@@ -1536,7 +1540,7 @@ Examples:
 - Reduced per-worker memory.
 - Flattened object graphs.
 
-## G. Memory Savings Estimate
+### G. Memory Savings Estimate
 
 Provide:
 
@@ -1550,13 +1554,13 @@ Provide:
 
 Separate measured improvements from theoretical estimates.
 
-## H. Validation and Benchmark Plan
+### H. Validation and Benchmark Plan
 
 Describe the workloads and metrics needed to confirm the proposed improvements.
 
 Include before-and-after measurements using identical conditions.
 
-## I. Coverage Report
+### I. Coverage Report
 
 List:
 
@@ -1567,7 +1571,7 @@ List:
 - Areas not fully analyzed.
 - Reasons for incomplete coverage.
 
-## J. Remaining Unknowns
+### J. Remaining Unknowns
 
 Document questions that require:
 
@@ -1578,11 +1582,21 @@ Document questions that require:
 - Platform-specific measurements.
 - Additional architectural investigation.
 
+### K. Fixes Applied
+
+Written in Phase 2 (Section 29). For each finding ID:
+
+- The fix that was applied.
+- The before/after measurement, taken with the same baseline method and workload as Phase 1.
+- The tests that confirm behavior is unchanged.
+
+Also list every deferred or reverted finding with the reason, and anything discovered while fixing.
+
 ---
 
-# 25. Validation Requirements
+## 25. Validation Requirements
 
-For every implemented optimization, the eventual validation process should include:
+For every optimization implemented in Phase 2, validation must include:
 
 1. Correctness tests.
 2. Representative workload benchmarks.
@@ -1607,7 +1621,7 @@ It must improve a meaningful memory metric or remove a demonstrated memory risk.
 
 ---
 
-# 26. Review Quality Requirements
+## 26. Review Quality Requirements
 
 The review must be:
 
@@ -1633,7 +1647,7 @@ The review must be:
 
 ---
 
-# 27. Additional Deep-Review Requirements
+## 27. Additional Deep-Review Requirements
 
 After completing the initial analysis, deliberately challenge the findings.
 
@@ -1667,7 +1681,7 @@ Investigate the answers before finalizing.
 
 ---
 
-# 28. Stop Conditions and Completion Criteria
+## 28. Stop Conditions and Completion Criteria
 
 Do not stop merely because several high-impact findings have been discovered.
 
@@ -1686,16 +1700,17 @@ Continue until:
 11. All findings have been prioritized.
 12. A final completeness pass has been performed.
 13. Remaining uncertainties have been explicitly documented.
+14. Phase 2: every confirmed finding fixed and verified, or deferred with a reason, and the Fixes Applied section written.
 
 If tool, context, time, or repository access limitations prevent full coverage, identify exactly what remains rather than claiming completion.
 
-Maintain a persistent review ledger if the investigation spans multiple sessions or context compactions.
+Maintain a persistent review ledger if the investigation spans multiple sessions or context compactions. During Phase 2, record in it which findings have been fixed, reverted, or deferred.
 
 Do not repeatedly rediscover previously analyzed findings. Revisit them only when new evidence changes the assessment.
 
 ---
 
-# 29. Phase 2 — Fix What the Audit Found
+## 29. Phase 2 — Fix What the Audit Found
 
 Only after the Phase 1 report is complete, fix the confirmed findings. Do not start fixing while still auditing — the complete, ranked list is what keeps effort on the highest-value problems instead of the first ones found.
 
@@ -1708,11 +1723,11 @@ Work through the findings in priority order. For each fix:
 
 Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the program's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
 
-When finished, update the report with a **Fixes Applied** section: what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
+When finished, update the report with the **Fixes Applied** section (Section 24, K): what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
 
 ---
 
-# 30. Final Instruction
+## 30. Final Instruction
 
 **Find wasted RAM, not merely memory leaks.**
 
