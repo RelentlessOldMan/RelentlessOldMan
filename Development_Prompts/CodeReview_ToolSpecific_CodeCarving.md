@@ -2025,7 +2025,7 @@ Work through the findings in priority order. For each fix:
 - Keep each fix small and focused; do not bundle unrelated changes.
 - Rebuild and re-run the tests after every fix, not just at the end.
 
-Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to CodeCarver's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
+Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the tool's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
 
 When finished, update the report with the **Fixes Applied** section (Section 29, N): what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
 

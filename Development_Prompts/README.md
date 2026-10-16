@@ -20,8 +20,8 @@ does more harm than good: optimization, and soundness-critical tool logic.
 | [`CodeReview_UI.md`](CodeReview_UI.md) | A no-stone-unturned **UI/UX** hardening pass — state correctness, cancellation paths, control/visual consistency, resizing/DPI, focus/keyboard, error and empty states. |
 | [`CodeReview_Workflow.md`](CodeReview_Workflow.md) | An end-to-end **workflow & data-lifecycle** pass — import/edit/save/reopen/export, dirty-state correctness, save-failure safety, chained-cancellation, so the user never loses or corrupts work. |
 | [`CodeReview_Performance.md`](CodeReview_Performance.md) | A measure-first **performance, scalability & resource** pass — algorithmic complexity, UI responsiveness, allocations/leaks, caching, scale/stress testing, under realistic and worst-case workloads. |
-| [`CodeReview_WastedCPU.md`](CodeReview_WastedCPU.md) | *Audit-first.* An exhaustive **wasted-CPU** pass — redundant/repeated computation, algorithmic complexity, hot loops, data-structure overhead, lock contention and busy-waiting, idle/background polling, repeated parsing — with estimated savings per finding. |
-| [`CodeReview_WastedRAM.md`](CodeReview_WastedRAM.md) | *Audit-first.* An exhaustive **wasted-RAM** pass — over-long object lifetimes, duplicate data, oversized collections/buffers, unbounded caches, per-worker memory amplification, transient spikes — not just leaks. |
+| [`CodeReview_Performance_Wasted_CPU.md`](CodeReview_Performance_Wasted_CPU.md) | *Audit-first.* An exhaustive **wasted-CPU** pass — redundant/repeated computation, algorithmic complexity, hot loops, data-structure overhead, lock contention and busy-waiting, idle/background polling, repeated parsing — with estimated savings per finding. |
+| [`CodeReview_Performance_Wasted_RAM.md`](CodeReview_Performance_Wasted_RAM.md) | *Audit-first.* An exhaustive **wasted-RAM** pass — over-long object lifetimes, duplicate data, oversized collections/buffers, unbounded caches, per-worker memory amplification, transient spikes — not just leaks. |
 | [`CodeReview_TestCoverage.md`](CodeReview_TestCoverage.md) | A **test-coverage analysis & remediation** pass (any language) — measure line/branch/method coverage, classify gaps by risk (MUST / SHOULD / OPTIONAL / intentionally uncovered / dead), add meaningful tests, chase the bugs they expose. Coverage is evidence, not the goal. |
 | [`CodeReview_GitHubDocumentation.md`](CodeReview_GitHubDocumentation.md) | A **public GitHub documentation & presentation** pass — README architecture, GitHub Pages, install/quick-start, accuracy and drift audits, AI-slop audit, user-journey tests — while keeping the house no-contributions + MIT standards intact. |
 | [`CodeReview_UtilLibrary.md`](CodeReview_UtilLibrary.md) | A stricter-than-normal **reusable-library / common-code** pass — public API as a long-term contract, misuse-resistance, portability, thread-safety, dependency hygiene, security-sensitive helpers, plus a KEEP/IMPROVE/MERGE/SPLIT/MOVE/DEPRECATE/DELETE inventory. |
@@ -31,8 +31,8 @@ does more harm than good: optimization, and soundness-critical tool logic.
 
 | Prompt | Use it for |
 |--------|------------|
-| [`CodeReview_CodeCarver.md`](CodeReview_CodeCarver.md) | *Audit-first.* An adversarial **C/C++ source-carving correctness** review for [CodeCarver](https://github.com/RelentlessOldMan/CodeCarver) — the carving contract, soundness vs. precision, preprocessor/macros, C and C++ semantics (templates, overloads, virtual dispatch, object lifetime), and anything removed that was actually required. |
-| [`CodeReview_CodeDiffer.md`](CodeReview_CodeDiffer.md) | *Audit-first.* An adversarial **C/C++ code-differ correctness** review for [CodeDiffer](https://github.com/RelentlessOldMan/CodeDiffer) — the comparison contract, no missed / no fabricated differences, file pairing, diff-algorithm and hunk correctness, symbol identity and entity matching, templates and the C++ object model. |
+| [`CodeReview_ToolSpecific_CodeCarving.md`](CodeReview_ToolSpecific_CodeCarving.md) | *Audit-first.* An adversarial **C/C++ source-carving correctness** review of a source-carving tool — the carving contract, soundness vs. precision, preprocessor/macros, C and C++ semantics (templates, overloads, virtual dispatch, object lifetime), and anything removed that was actually required. |
+| [`CodeReview_ToolSpecific_CodeDiffing.md`](CodeReview_ToolSpecific_CodeDiffing.md) | *Audit-first.* An adversarial **C/C++ code-differ correctness** review of a code-diffing tool — the comparison contract, no missed / no fabricated differences, file pairing, diff-algorithm and hunk correctness, symbol identity and entity matching, templates and the C++ object model. |
 
 ### Implementation specs
 
@@ -100,7 +100,7 @@ Ends with a stress pass and before/after measurements.
 
 Best for anything that gets slow with large data, long sessions, or repeated operations.
 
-## CodeReview_WastedCPU.md — wasted-CPU review
+## CodeReview_Performance_Wasted_CPU.md — wasted-CPU review
 
 An **audit-first** companion to `CodeReview_Performance.md`, focused on computation that
 never needed to happen rather than merely slow code. It separates CPU metrics (latency,
@@ -118,7 +118,7 @@ off.
 
 Best when a tool burns CPU at scale or while idle.
 
-## CodeReview_WastedRAM.md — wasted-RAM review
+## CodeReview_Performance_Wasted_RAM.md — wasted-RAM review
 
 The memory counterpart to the wasted-CPU audit, also **audit-first**. It looks past
 classic leaks to memory that is reachable and correctly freed but still wasteful:
@@ -199,10 +199,9 @@ is hard, not because the software fights the player.
 
 Best for puzzle games — run it alongside the general passes, not instead of them.
 
-## CodeReview_CodeCarver.md — CodeCarver correctness review
+## CodeReview_ToolSpecific_CodeCarving.md — source-carving correctness review
 
-An **audit-first**, adversarial review written specifically for
-[CodeCarver](https://github.com/RelentlessOldMan/CodeCarver) (C/C++ reachability
+An **audit-first**, adversarial review of a C/C++ source-carving tool (reachability
 carving). It first pins down the carving contract, reachability categories, and the
 soundness-vs-precision trade-off, then audits the whole pipeline: AST/declaration
 identity and traversal completeness, preprocessor and conditional compilation (macros,
@@ -214,17 +213,16 @@ that was required, code kept that was provably dead, invalid output, nondetermin
 silent failures, each with a minimal reproduction. Phase 2 turns each reproduction into a
 failing regression test, then fixes it.
 
-## CodeReview_CodeDiffer.md — CodeDiffer correctness review
+## CodeReview_ToolSpecific_CodeDiffing.md — code-differ correctness review
 
-The same treatment for [CodeDiffer](https://github.com/RelentlessOldMan/CodeDiffer),
-also **audit-first**. It establishes the comparison contract (granularity, difference
+The same treatment for a C/C++ code-diffing tool, also **audit-first**. It establishes the comparison contract (granularity, difference
 semantics, guarantees, change classifications) and the core properties — no missed
 differences, no fabricated differences, correct attribution and old/new direction, no
 silent success on incomplete analysis — then audits file discovery and pairing,
 encoding/line endings, textual diff and hunk correctness, C/C++ parsing, symbol identity
 and entity matching (overloads, renames, moves, ambiguous matches), templates, the C++
 object model, and preprocessor differences. An empty diff is never assumed to mean
-equivalent inputs. Phase 2 fixes confirmed findings test-first, like the CodeCarver pass.
+equivalent inputs. Phase 2 fixes confirmed findings test-first, like the carving pass.
 
 ## Spec_DiagnosticSystem.md — diagnostics/support system
 
@@ -281,8 +279,8 @@ Point a Claude Code session at the repo you want worked on, then paste the promp
 say "follow `Development_Prompts/CodeReview.md`"). Run them separately — each is a
 different job. For a GUI, project-based app, a good order for the review passes is:
 **code** first, then **workflow**, then **UI**, then **performance** (harden behavior
-before chasing speed). The **audit-first** passes (`WastedCPU`, `WastedRAM`, and the
-`CodeCarver` / `CodeDiffer` tool-specific ones) write their full report before fixing
+before chasing speed). The **audit-first** passes (`Wasted_CPU`, `Wasted_RAM`, and the
+`ToolSpecific` carving / diffing ones) write their full report before fixing
 anything, so you get the ranked findings even if you stop the session early.
 `CodeReview_TestCoverage.md` fits after the code pass, and
 `CodeReview_GitHubDocumentation.md` is a good last step before sharing a repo.
