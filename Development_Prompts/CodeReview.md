@@ -367,7 +367,7 @@ Be especially careful about:
 - Protocols
 - User-visible behavior
 
-If a potentially breaking change appears justified, stop and clearly explain it before making that change.
+If a potentially breaking change appears justified, do NOT make it. Record it under "Proposed breaking changes" in the final report, explaining what would change, who it would affect, and why it appears justified, then continue the pass.
 
 ## Important: Actually Fix Things
 
@@ -442,6 +442,7 @@ Only after completing the work, give me a concise summary containing:
 - Security improvements
 - Significant refactoring
 - Tests added/changed
+- Proposed breaking changes (justified but deliberately NOT made)
 - Remaining concerns you intentionally did NOT change
 - Any areas that deserve further investigation
 - Build/test/analyzer results

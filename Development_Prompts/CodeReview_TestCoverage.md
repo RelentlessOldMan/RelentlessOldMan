@@ -26,7 +26,7 @@ Perform the following:
 6. Measure at minimum:
    - Line coverage
    - Branch coverage
-   - Method coverage where available
+   - Method (or function) coverage where the tool reports it
 7. Identify uncovered and partially covered production code.
 8. Correlate uncovered code with existing tests.
 9. Determine which gaps represent meaningful missing test scenarios.
@@ -36,12 +36,12 @@ Perform the following:
 13. Regenerate coverage.
 14. Repeat where additional testing provides meaningful value.
 15. Produce a final report describing:
-   - Coverage before and after
-   - Tests added
-   - Bugs discovered
-   - Important scenarios now covered
-   - Remaining uncovered areas
-   - Reasons those areas remain uncovered
+    - Coverage before and after
+    - Tests added
+    - Bugs discovered
+    - Important scenarios now covered
+    - Remaining uncovered areas
+    - Reasons those areas remain uncovered
 
 Do not blindly pursue 100% coverage.
 
@@ -63,13 +63,13 @@ Do not:
 
 - Delete legitimate tests merely to make the suite pass.
 - Change production behavior simply because an existing test fails.
-- weaken assertions to make tests pass.
-- hide failures.
-- exclude difficult code from coverage merely to improve reported percentages.
-- add meaningless tests solely to increase coverage.
-- introduce arbitrary delays or flaky timing dependencies.
-- make tests dependent on execution order.
-- make unit tests depend unnecessarily on external services.
+- Weaken assertions to make tests pass.
+- Hide failures.
+- Exclude difficult code from coverage merely to improve reported percentages.
+- Add meaningless tests solely to increase coverage.
+- Introduce arbitrary delays or flaky timing dependencies.
+- Make tests dependent on execution order.
+- Make unit tests depend unnecessarily on external services.
 
 If a newly written test reveals what appears to be a production defect, investigate the behavior rather than immediately changing either the test or production code.
 
@@ -151,6 +151,8 @@ Generate human-readable HTML reports when useful for investigation.
 
 Do not permanently modify project dependencies merely to perform the analysis if coverage can be collected without doing so.
 
+Write coverage output to an ignored or temporary location. Do not commit coverage artifacts (e.g. `TestResults/`, `.coverage`, `htmlcov/`, `coverage/`, `*.gcda`, `lcov.info`). Remove any temporary tooling and artifacts added for the analysis before finishing.
+
 If coverage infrastructure already exists, prefer using it rather than introducing a competing system.
 
 ---
@@ -175,11 +177,9 @@ This is particularly important.
 
 Example:
 
-```csharp
-if (file.Exists && !file.IsLocked)
-{
-    Process(file);
-}
+```text
+if file exists and file is not locked:
+    process(file)
 ```
 
 Executing this code does not necessarily mean its behavior is adequately tested.
@@ -291,6 +291,12 @@ Do not write a test simply to execute dead code.
 
 Investigate whether the code should instead be removed.
 
+## REQUIRES HUMAN DECISION
+
+The correct behavior is ambiguous — requirements, surrounding code, and documentation do not settle what the code should do, so a test cannot assert it without guessing.
+
+Do not invent the expected behavior. Flag it for review (see section 23).
+
 ---
 
 # 10. Analyze Behavioral Coverage
@@ -301,9 +307,9 @@ They do NOT prove that the behavior was validated.
 
 Inspect existing tests for weak patterns such as:
 
-```csharp
-var result = service.DoSomething();
-Assert.NotNull(result);
+```text
+result = service.do_something()
+assert result is not null
 ```
 
 when important properties of `result` should also be validated.
@@ -405,11 +411,11 @@ Consider:
 - Concurrent invocation
 - Continuation behavior
 
-Avoid tests that block async code using `.Result` or `.Wait()` unless specifically testing synchronous interoperability.
+Avoid tests that block on async results (e.g. `.Result`/`.Wait()`, `asyncio.run` inside a running loop, unawaited promises) unless specifically testing synchronous interoperability.
 
 ## Cancellation
 
-Where `CancellationToken` is accepted, determine whether cancellation behavior is meaningfully tested.
+Where cancellation tokens/signals (`CancellationToken`, `AbortSignal`, Go `context`, etc.) are accepted, determine whether cancellation behavior is meaningfully tested.
 
 ## Retry Logic
 
@@ -459,8 +465,8 @@ Pay special attention to compound conditions.
 
 Example:
 
-```csharp
-if (enabled && connected && !cancelled)
+```text
+if enabled and connected and not cancelled
 ```
 
 Do not consider the condition adequately tested merely because the body executes once.
@@ -534,11 +540,11 @@ Identify tests likely to behave inconsistently.
 
 Watch for:
 
-```csharp
-Thread.Sleep(...)
+```text
+sleep(...)
 ```
 
-as synchronization.
+(e.g. `Thread.Sleep`, `time.sleep`, `setTimeout` waits) as synchronization.
 
 Also investigate:
 
@@ -571,11 +577,13 @@ New tests should be:
 
 A failing test should make it reasonably obvious what behavior regressed.
 
-Prefer descriptive names such as:
+Prefer descriptive names, in the project's naming convention, such as:
 
 ```text
 Save_WhenDestinationIsReadOnly_ReturnsFailureWithoutDeletingOriginal
 ```
+
+(e.g. `test_save_when_destination_read_only_returns_failure_without_deleting_original` in Python)
 
 over:
 
@@ -609,12 +617,9 @@ Use judgment.
 
 Do NOT create tests like:
 
-```csharp
-[Fact]
-public void Constructor_CanBeCalled()
-{
-    _ = new Foo();
-}
+```text
+test "constructor can be called":
+    new Foo()
 ```
 
 solely because it increases coverage.
@@ -732,12 +737,12 @@ Record:
 BEFORE
 Line:   XX.X%
 Branch: XX.X%
-Method: XX.X%
+Method: XX.X%  (or function coverage; N/A if the tool doesn't report it)
 
 AFTER
 Line:   YY.Y%
 Branch: YY.Y%
-Method: YY.Y%
+Method: YY.Y%  (or function coverage; N/A if the tool doesn't report it)
 ```
 
 Coverage improvement is useful evidence, but it is not itself proof that the review succeeded.
@@ -812,7 +817,7 @@ Identify generated code and other legitimate exclusions.
 
 Examples may include:
 
-- Designer-generated code
+- UI-designer / codegen output
 - Source-generated code
 - Generated serialization code
 - Generated API clients
@@ -872,7 +877,7 @@ Skipped:
 
 Line Coverage:
 Branch Coverage:
-Method Coverage:
+Method Coverage:   (or function coverage; N/A if the tool doesn't report it)
 ```
 
 ## Final
@@ -885,7 +890,7 @@ Skipped:
 
 Line Coverage:
 Branch Coverage:
-Method Coverage:
+Method Coverage:   (or function coverage; N/A if the tool doesn't report it)
 ```
 
 ## Tests Added

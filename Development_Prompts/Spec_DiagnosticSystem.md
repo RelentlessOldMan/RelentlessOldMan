@@ -89,6 +89,10 @@ Prefer:
 
 when that information is safe to record.
 
+Never write secrets (passwords, tokens, API keys, connection strings, authorization headers, URLs containing credentials or tokens) to logs.
+
+Redact them at write time — not only later, when building the diagnostic package.
+
 ---
 
 # 3. STRUCTURED LOGGING
@@ -97,11 +101,13 @@ Prefer structured diagnostic information where practical.
 
 For example, conceptually:
 
+```text
 Event: ProjectLoadFailed
 Path: ...
 Reason: ...
 ExceptionType: ...
 DurationMs: ...
+```
 
 rather than constructing everything as arbitrary prose.
 
@@ -122,6 +128,8 @@ Record it when the application starts.
 This allows all events from one execution to be correlated.
 
 Include the session ID in the generated diagnostic package.
+
+If the application already has a session ID or abnormal-shutdown marker (for example from a crash-recovery system built to Spec_CrashRecovery.md), reuse it rather than adding a second.
 
 If the application launches multiple processes/components, provide correlation identifiers where useful.
 
@@ -179,13 +187,15 @@ The objective is to reconstruct the user's workflow, not surveil them.
 
 A useful diagnostic history might read:
 
+```text
 14:03:11 Application started
 14:03:18 Opened project
-14:03:26 Selected card #17
-14:03:31 Changed card style
-14:03:37 Selected artwork
+14:03:26 Selected item #17
+14:03:31 Changed item property
+14:03:37 Attached image
 14:03:42 Save started
 14:03:42 Save failed: UnauthorizedAccessException
+```
 
 That is vastly more useful than thousands of low-level UI messages.
 
@@ -197,14 +207,18 @@ For important operations, record BOTH beginning and outcome.
 
 Conceptually:
 
+```text
 Import started
 Import completed successfully
+```
 
 or:
 
+```text
 Import started
 Import failed
 Exception...
+```
 
 Where useful, record duration.
 
@@ -243,10 +257,12 @@ Do not destroy useful exception information by replacing exceptions with generic
 
 For example, avoid:
 
+```text
 catch (...)
 {
     Log("Something failed");
 }
+```
 
 when the original exception contains the information necessary to diagnose the problem.
 
@@ -295,12 +311,14 @@ Often the final exception is not the real cause.
 
 For example:
 
+```text
 Configuration loaded with warning
 → resource missing
 → fallback used
 → user begins export
 → unexpected state
 → crash
+```
 
 The diagnostic system should preserve that chain.
 
@@ -347,11 +365,13 @@ Logging should degrade gracefully.
 
 Avoid recursive failure patterns where:
 
+```text
 Logging failed
 → log the logging failure
 → logging failed
 → log the logging failure
 → ...
+```
 
 ---
 
@@ -410,6 +430,8 @@ Prioritize:
 - Limited recent historical logs if useful
 
 Do not dump months of logs into every package.
+
+Apply the same redaction and path sanitization used for configuration to included logs, or confirm it was already applied at write time.
 
 ## configuration/
 
@@ -634,6 +656,7 @@ This should copy a SMALL textual summary suitable for pasting into:
 
 Example:
 
+```text
 Application: ExampleApp 2.4.1
 Build: 8421
 OS: Windows 11 24H2
@@ -644,6 +667,7 @@ Current State: Project loaded, modified
 Last Operation: Export
 Last Error: IOException during export
 Diagnostic Package: available separately
+```
 
 Do not copy thousands of lines of logs.
 
@@ -713,10 +737,12 @@ For complex operations, consider assigning an operation/correlation ID.
 
 Example:
 
+```text
 Export [operation 84F2] started
 Export [operation 84F2] loading assets
 Export [operation 84F2] rendering
 Export [operation 84F2] failed
+```
 
 This is especially useful when multiple operations can overlap.
 
@@ -795,15 +821,17 @@ Implement lightweight breadcrumbs for major state transitions.
 
 Examples:
 
+```text
 Application started
 → project opened
 → editor activated
 → item selected
-→ style changed
+→ item property changed
 → save started
 → save succeeded
 → export started
 → export failed
+```
 
 These breadcrumbs are often more valuable than huge amounts of low-level logging.
 
@@ -841,6 +869,7 @@ Include a manifest listing what the diagnostic package contains.
 
 For example:
 
+```text
 manifest.txt
 
 Application Version: ...
@@ -857,6 +886,7 @@ Excluded:
 - User project
 - Screenshot
 - Credentials
+```
 
 This makes the package self-describing.
 
@@ -911,10 +941,11 @@ Test:
 - Previous abnormal session
 - Optional user-content inclusion
 - Configuration sanitization
+- Log content redaction
 
 Security/privacy tests are particularly important.
 
-Explicitly verify that known secret fields DO NOT appear in generated packages.
+Explicitly verify that known secret fields DO NOT appear in generated packages — in included log contents as well as configuration.
 
 ---
 

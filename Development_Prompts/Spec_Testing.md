@@ -2,7 +2,7 @@
 
 Implement a comprehensive, maintainable, practical automated testing system for this application.
 
-This is an IMPLEMENTATION specification.
+This is an IMPLEMENTATION specification — you are building and running a working test suite, not producing a review or a report.
 
 The objective is not simply to increase a code-coverage percentage.
 
@@ -63,7 +63,28 @@ Prioritize tests according to risk, not file count.
 
 ---
 
-# 2. DEFINE THE TESTING PYRAMID
+# 2. BASELINE AND TEST HONESTY
+
+Before adding or changing tests, run the existing suite.
+
+Record any pre-existing failures as a baseline, so they are not later mistaken for regressions you introduced — or silently absorbed into "the suite was already red."
+
+Derive expected values from the INTENDED behavior (specification, documentation, domain rules, user-visible contract), not from whatever the code currently outputs.
+
+A test that merely enshrines current output will happily lock in a bug.
+
+If a test exposes a bug:
+
+- Fix the bug and keep the test as a regression test, or
+- Report the bug clearly if fixing it is out of scope.
+
+Never weaken, skip, or delete a test merely to get a green run.
+
+(CodeReview_TestCoverage.md applies the same rules.)
+
+---
+
+# 3. DEFINE THE TESTING PYRAMID
 
 Use multiple levels of testing where appropriate.
 
@@ -111,7 +132,7 @@ Choose the layers that provide meaningful value.
 
 ---
 
-# 3. TEST BEHAVIOR, NOT IMPLEMENTATION
+# 4. TEST BEHAVIOR, NOT IMPLEMENTATION
 
 Prefer tests that verify observable behavior.
 
@@ -129,7 +150,7 @@ Test contracts and outcomes.
 
 ---
 
-# 4. PRIORITIZE HIGH-RISK BEHAVIOR
+# 5. PRIORITIZE HIGH-RISK BEHAVIOR
 
 Test the things whose failure would hurt the most.
 
@@ -153,7 +174,7 @@ Do not spend disproportionate effort testing trivial code while dangerous code r
 
 ---
 
-# 5. CORE BUSINESS LOGIC
+# 6. CORE BUSINESS LOGIC
 
 Core logic should be testable without requiring the entire application UI to launch.
 
@@ -165,7 +186,7 @@ Make pragmatic improvements where testability exposes unhealthy coupling.
 
 ---
 
-# 6. HAPPY PATH TESTING
+# 7. HAPPY PATH TESTING
 
 Test expected successful behavior.
 
@@ -183,7 +204,7 @@ It is not sufficient.
 
 ---
 
-# 7. FAILURE PATH TESTING
+# 8. FAILURE PATH TESTING
 
 For every important operation, ask:
 
@@ -210,7 +231,7 @@ Verify not only that an error occurs, but that the application remains in the CO
 
 ---
 
-# 8. BOUNDARY TESTING
+# 9. BOUNDARY TESTING
 
 Test values at boundaries.
 
@@ -246,7 +267,7 @@ Test them deliberately.
 
 ---
 
-# 9. INVALID INPUT TESTING
+# 10. INVALID INPUT TESTING
 
 Use malformed input.
 
@@ -269,7 +290,7 @@ The application should reject or handle invalid input predictably.
 
 ---
 
-# 10. TABLE-DRIVEN / PARAMETERIZED TESTS
+# 11. TABLE-DRIVEN / PARAMETERIZED TESTS
 
 Use parameterized tests when the same behavior should hold across many inputs.
 
@@ -286,7 +307,7 @@ Avoid copy/pasting nearly identical tests.
 
 ---
 
-# 11. PERSISTENCE ROUND-TRIP TESTING
+# 12. PERSISTENCE ROUND-TRIP TESTING
 
 For applications that save state:
 
@@ -310,7 +331,7 @@ Can the application reconstruct the same meaningful state?
 
 ---
 
-# 12. COMPLEX PERSISTENCE ROUND TRIPS
+# 13. COMPLEX PERSISTENCE ROUND TRIPS
 
 Create a deliberately complex project/document containing as many supported features as practical.
 
@@ -336,7 +357,7 @@ This should become a high-value regression test.
 
 ---
 
-# 13. SAVE SAFETY TESTING
+# 14. SAVE SAFETY TESTING
 
 Test:
 
@@ -357,7 +378,7 @@ Verify failed saves do not destroy previous valid data.
 
 ---
 
-# 14. IMPORT TESTING
+# 15. IMPORT TESTING
 
 Test:
 
@@ -377,7 +398,7 @@ An unsuccessful import should not destroy existing valid application state.
 
 ---
 
-# 15. EXPORT TESTING
+# 16. EXPORT TESTING
 
 Test:
 
@@ -395,12 +416,13 @@ Verify Export does not incorrectly alter Save state unless explicitly designed t
 
 ---
 
-# 16. WORKFLOW TESTING
+# 17. WORKFLOW TESTING
 
 Test complete user workflows rather than only individual methods.
 
 Examples:
 
+```text
 Create
 → edit
 → save
@@ -424,12 +446,13 @@ Create
 → Save As
 → cancel
 → verify work remains intact
+```
 
 These tests catch bugs that isolated unit tests cannot.
 
 ---
 
-# 17. STATE MACHINE TESTING
+# 18. STATE MACHINE TESTING
 
 If application behavior depends on state, model important states explicitly.
 
@@ -453,7 +476,7 @@ Verify operations are available only when appropriate.
 
 ---
 
-# 18. DIRTY-STATE TESTING
+# 19. DIRTY-STATE TESTING
 
 If the application tracks unsaved changes, test it aggressively.
 
@@ -465,7 +488,7 @@ Edit → dirty
 
 Save → clean
 
-Edit → undo to original state
+Edit → undo to original state → clean if the app tracks undo-to-saved, otherwise dirty (verify whichever is designed)
 
 Save failure → still dirty
 
@@ -481,7 +504,7 @@ Treat them seriously.
 
 ---
 
-# 19. CANCELLATION TESTING
+# 20. CANCELLATION TESTING
 
 Every cancelable operation needs tests.
 
@@ -503,18 +526,20 @@ Verify cancellation:
 
 ---
 
-# 20. NESTED CANCELLATION
+# 21. NESTED CANCELLATION
 
 Test chained workflows.
 
 Example:
 
+```text
 Open B
 → current A is dirty
 → application asks Save / Don't Save / Cancel
 → choose Save
 → Save As dialog
 → cancel Save As
+```
 
 Expected:
 
@@ -530,7 +555,7 @@ Create tests for this class of workflow bug.
 
 ---
 
-# 21. CRASH RECOVERY TESTING
+# 22. CRASH RECOVERY TESTING
 
 If crash recovery exists, test it as a first-class subsystem.
 
@@ -548,12 +573,14 @@ Test:
 - Normal shutdown
 - Recovery cleanup
 - Recovery after repeated crashes
+- Original saved file unchanged after Recover (until the user explicitly saves)
+- Crash during recovery write (previous recovery generation remains usable)
 
-Recovery tests should follow the application's Crash Recovery specification.
+Recovery tests should follow Spec_CrashRecovery.md — in particular its AUTOMATED TESTS list and GOLDEN FAILURE SCENARIOS.
 
 ---
 
-# 22. CONFIGURATION TESTING
+# 23. CONFIGURATION TESTING
 
 Test configuration behavior.
 
@@ -574,28 +601,32 @@ Bad configuration should not unnecessarily brick the application.
 
 ---
 
-# 23. VERSION / MIGRATION TESTING
+# 24. VERSION / MIGRATION TESTING
 
 If persisted formats evolve, preserve representative older files as test fixtures.
 
 Verify:
 
+```text
 Old version
 → load
 → migrate
 → correct current representation
+```
 
 Where supported:
 
+```text
 Current version
 → save
 → load
+```
 
 Do not accidentally break existing user data when formats evolve.
 
 ---
 
-# 24. GOLDEN / FIXTURE FILES
+# 25. GOLDEN / FIXTURE FILES
 
 Maintain carefully selected test files representing important scenarios.
 
@@ -617,15 +648,17 @@ Document why each important fixture exists.
 
 ---
 
-# 25. GOLDEN OUTPUT TESTS
+# 26. GOLDEN OUTPUT TESTS
 
 For deterministic generated output, consider golden/reference tests.
 
 Examples:
 
+```text
 Input fixture
 → generate output
 → compare against known-good output
+```
 
 Use this for formats where exact or normalized comparison is meaningful.
 
@@ -635,7 +668,7 @@ Normalize such values where appropriate.
 
 ---
 
-# 26. REGRESSION TEST POLICY
+# 27. REGRESSION TEST POLICY
 
 Every meaningful bug fix should strongly consider adding a regression test.
 
@@ -651,7 +684,7 @@ This prevents the same bug from returning.
 
 ---
 
-# 27. BUG REPRODUCTION TESTS
+# 28. BUG REPRODUCTION TESTS
 
 When a user reports a bug:
 
@@ -663,7 +696,7 @@ Over time, the test suite should become institutional memory for real failures.
 
 ---
 
-# 28. FILESYSTEM TESTING
+# 29. FILESYSTEM TESTING
 
 Use isolated temporary directories.
 
@@ -681,7 +714,7 @@ Clean up after tests.
 
 ---
 
-# 29. FILESYSTEM FAILURE INJECTION
+# 30. FILESYSTEM FAILURE INJECTION
 
 Where practical, simulate:
 
@@ -698,7 +731,7 @@ Do not require physically filling the disk for ordinary automated tests if the a
 
 ---
 
-# 30. TIME TESTING
+# 31. TIME TESTING
 
 If behavior depends on time, abstract time enough to test it deterministically.
 
@@ -718,7 +751,7 @@ Do not make the suite slow and flaky because it depends on wall-clock waiting.
 
 ---
 
-# 31. RANDOMNESS
+# 32. RANDOMNESS
 
 If application behavior uses randomness:
 
@@ -730,7 +763,7 @@ Tests should be reproducible.
 
 ---
 
-# 32. NETWORK TESTING
+# 33. NETWORK TESTING
 
 If networking exists:
 
@@ -759,7 +792,7 @@ Keep a small number of real integration tests if they provide meaningful value a
 
 ---
 
-# 33. DATABASE TESTING
+# 34. DATABASE TESTING
 
 If a database exists:
 
@@ -780,7 +813,7 @@ Do not mock the database so heavily that the test no longer proves the queries w
 
 ---
 
-# 34. EXTERNAL PROCESS TESTING
+# 35. EXTERNAL PROCESS TESTING
 
 If the application launches tools/processes, abstract invocation sufficiently to test:
 
@@ -798,7 +831,7 @@ Use a small deterministic fake executable/test helper where useful.
 
 ---
 
-# 35. DEVICE / HARDWARE TESTING
+# 36. DEVICE / HARDWARE TESTING
 
 If hardware interaction exists:
 
@@ -820,7 +853,7 @@ Test:
 
 ---
 
-# 36. UI TESTING
+# 37. UI TESTING
 
 For GUI applications, automate high-value UI behavior where practical.
 
@@ -843,12 +876,13 @@ UI tests should protect behavior users actually depend upon.
 
 ---
 
-# 37. UI STATE TESTS
+# 38. UI STATE TESTS
 
 Where UI state logic can be tested below the rendering layer, do so.
 
 Example:
 
+```text
 Given:
 No project loaded
 
@@ -862,17 +896,19 @@ Project loaded and dirty
 
 Expect:
 Save enabled
+```
 
 This is often faster and more reliable than driving the full GUI for every state combination.
 
 ---
 
-# 38. MINIMAL END-TO-END UI TESTS
+# 39. MINIMAL END-TO-END UI TESTS
 
 Maintain a small set of critical end-to-end UI tests.
 
 Examples:
 
+```text
 Launch
 → create/open
 → edit
@@ -889,6 +925,7 @@ Launch
 → close
 → cancel
 → verify application remains open
+```
 
 Keep these tests focused and valuable.
 
@@ -896,7 +933,7 @@ Do not build a gigantic brittle UI automation suite unless the application warra
 
 ---
 
-# 39. VISUAL REGRESSION TESTING
+# 40. VISUAL REGRESSION TESTING
 
 If visual consistency is particularly important and the framework supports reliable screenshot testing, consider visual regression tests for selected stable views.
 
@@ -914,7 +951,7 @@ Only adopt them where the environment can be controlled sufficiently.
 
 ---
 
-# 40. CONCURRENCY TESTING
+# 41. CONCURRENCY TESTING
 
 If concurrency exists, test:
 
@@ -930,7 +967,7 @@ Do not assume the same execution order every time.
 
 ---
 
-# 41. STALE ASYNC RESULT TEST
+# 42. STALE ASYNC RESULT TEST
 
 Explicitly test:
 
@@ -955,7 +992,7 @@ This is especially important for:
 
 ---
 
-# 42. RAPID INTERACTION TESTING
+# 43. RAPID INTERACTION TESTING
 
 Simulate impatient users.
 
@@ -977,7 +1014,7 @@ Ensure operations do not duplicate or corrupt state.
 
 ---
 
-# 43. PROPERTY-BASED TESTING
+# 44. PROPERTY-BASED TESTING
 
 For suitable pure logic, consider property-based testing.
 
@@ -999,7 +1036,7 @@ Do not introduce it merely because it sounds sophisticated.
 
 ---
 
-# 44. FUZZ TESTING
+# 45. FUZZ TESTING
 
 For parsers/importers/file formats/protocols, consider lightweight fuzz testing.
 
@@ -1025,7 +1062,7 @@ It should not:
 
 ---
 
-# 45. SECURITY TESTING
+# 46. SECURITY TESTING
 
 Where relevant, test:
 
@@ -1043,7 +1080,7 @@ Security-sensitive fixes should receive regression tests.
 
 ---
 
-# 46. DIAGNOSTICS TESTING
+# 47. DIAGNOSTICS TESTING
 
 If the application has a diagnostics system, test:
 
@@ -1061,7 +1098,7 @@ Explicitly verify secrets do NOT appear in diagnostic packages.
 
 ---
 
-# 47. ERROR MESSAGE TESTING
+# 48. ERROR MESSAGE TESTING
 
 Do not generally test exact complete error strings unless wording is part of a required contract.
 
@@ -1076,7 +1113,7 @@ Avoid making tests fail because someone improved punctuation.
 
 ---
 
-# 48. RESOURCE CLEANUP TESTING
+# 49. RESOURCE CLEANUP TESTING
 
 Where practical, verify operations release:
 
@@ -1090,26 +1127,30 @@ Where practical, verify operations release:
 
 Example:
 
+```text
 Open file
 → close
 → test can rename/delete file
+```
 
 This can expose leaked handles.
 
 ---
 
-# 49. MEMORY / LEAK TESTING
+# 50. MEMORY / LEAK TESTING
 
 For components historically prone to leaks, consider targeted tests.
 
 Examples:
 
+```text
 Create view
 → close view
 → ensure it can be collected where meaningful
 
 Repeat operation many times
 → memory should stabilize within reasonable bounds
+```
 
 Do not make ordinary unit tests depend on unreliable exact GC timing.
 
@@ -1117,7 +1158,7 @@ Use appropriate profiling/benchmark tests separately where necessary.
 
 ---
 
-# 50. PERFORMANCE REGRESSION TESTING
+# 51. PERFORMANCE REGRESSION TESTING
 
 Protect important performance characteristics without creating flaky tests.
 
@@ -1136,7 +1177,7 @@ Prefer generous thresholds or dedicated benchmark comparisons.
 
 ---
 
-# 51. LARGE-DATA TESTING
+# 52. LARGE-DATA TESTING
 
 Create representative large workloads.
 
@@ -1154,7 +1195,7 @@ Large-data tests may be placed in a slower test category rather than every quick
 
 ---
 
-# 52. LONG-RUN / SOAK TESTS
+# 53. LONG-RUN / SOAK TESTS
 
 For applications where long sessions matter, create optional soak/stress tests.
 
@@ -1180,7 +1221,7 @@ These do not necessarily need to run on every local build.
 
 ---
 
-# 53. TEST CATEGORIES
+# 54. TEST CATEGORIES
 
 Organize tests into useful categories such as:
 
@@ -1207,7 +1248,7 @@ Full tests before release/merge.
 
 ---
 
-# 54. FAST TEST SUITE
+# 55. FAST TEST SUITE
 
 Maintain a fast core suite.
 
@@ -1224,7 +1265,7 @@ A test suite that takes forever will be avoided.
 
 ---
 
-# 55. FULL TEST SUITE
+# 56. FULL TEST SUITE
 
 Maintain a broader suite for deeper verification.
 
@@ -1241,7 +1282,7 @@ Run this at appropriate checkpoints.
 
 ---
 
-# 56. TEST ISOLATION
+# 57. TEST ISOLATION
 
 Tests should not depend on execution order.
 
@@ -1255,7 +1296,7 @@ Parallel execution should be safe where supported, or tests requiring serializat
 
 ---
 
-# 57. TEST CLEANUP
+# 58. TEST CLEANUP
 
 Tests must clean up:
 
@@ -1273,7 +1314,7 @@ Cleanup should occur even when the test fails.
 
 ---
 
-# 58. DETERMINISM
+# 59. DETERMINISM
 
 Tests should produce the same result when run repeatedly.
 
@@ -1291,7 +1332,7 @@ Control these dependencies where practical.
 
 ---
 
-# 59. FLAKY TEST POLICY
+# 60. FLAKY TEST POLICY
 
 Treat flaky tests as defects.
 
@@ -1318,7 +1359,7 @@ Do not simply add increasingly long sleeps.
 
 ---
 
-# 60. MOCKING STRATEGY
+# 61. MOCKING STRATEGY
 
 Mock boundaries, not everything.
 
@@ -1338,7 +1379,7 @@ Use real application components together when practical.
 
 ---
 
-# 61. TEST DOUBLES
+# 62. TEST DOUBLES
 
 Use:
 
@@ -1355,7 +1396,7 @@ Keep test doubles reusable and understandable.
 
 ---
 
-# 62. TEST DATA BUILDERS
+# 63. TEST DATA BUILDERS
 
 Create reusable builders/factories for complex test data.
 
@@ -1375,7 +1416,7 @@ Avoid massive repeated setup blocks.
 
 ---
 
-# 63. ASSERTION HELPERS
+# 64. ASSERTION HELPERS
 
 Create meaningful assertion helpers where useful.
 
@@ -1389,7 +1430,7 @@ When assertions fail, they should produce useful diagnostic information.
 
 ---
 
-# 64. TEST NAMING
+# 65. TEST NAMING
 
 Test names should communicate:
 
@@ -1405,11 +1446,13 @@ Open_WhenCurrentDocumentDirtyAndSaveCanceled_DoesNotReplaceCurrentDocument
 
 Recovery_WhenLatestSnapshotCorrupt_UsesPreviousGeneration
 
+(Follow the language's convention, e.g. `test_save_when_write_fails_preserves_file` in Python.)
+
 A developer should understand what broke from the test name.
 
 ---
 
-# 65. ARRANGE / ACT / ASSERT
+# 66. ARRANGE / ACT / ASSERT
 
 Keep tests easy to read.
 
@@ -1425,7 +1468,7 @@ Do not enforce ceremonial formatting when unnecessary, but maintain clear separa
 
 ---
 
-# 66. ONE CONCEPT PER TEST
+# 67. ONE CONCEPT PER TEST
 
 Prefer tests with a clear reason to fail.
 
@@ -1435,7 +1478,7 @@ When a test fails, the developer should know what broke.
 
 ---
 
-# 67. DO NOT DUPLICATE PRODUCTION LOGIC
+# 68. DO NOT DUPLICATE PRODUCTION LOGIC
 
 Tests should not reimplement the same algorithm and compare the application against the duplicate.
 
@@ -1445,7 +1488,7 @@ Otherwise the same bug can exist in both implementations.
 
 ---
 
-# 68. CODE COVERAGE
+# 69. CODE COVERAGE
 
 Measure coverage if appropriate.
 
@@ -1469,7 +1512,7 @@ Pay particular attention to uncovered:
 
 ---
 
-# 69. MUTATION TESTING
+# 70. MUTATION TESTING
 
 If tooling is mature and practical for the language, consider occasional mutation testing on important core logic.
 
@@ -1479,7 +1522,7 @@ Do not make this mandatory if tooling is poor or runtime cost is excessive.
 
 ---
 
-# 70. CI INTEGRATION
+# 71. CI INTEGRATION
 
 Integrate automated tests into the project's existing CI/build workflow where appropriate.
 
@@ -1497,9 +1540,11 @@ For important branches/releases, consider:
 
 Do not create an enormous CI pipeline if the project does not warrant it.
 
+If the project has no CI, don't add one unless asked; document the local test commands instead.
+
 ---
 
-# 71. FAILED TEST OUTPUT
+# 72. FAILED TEST OUTPUT
 
 Test failures should be useful.
 
@@ -1515,7 +1560,7 @@ Do not make developers reproduce every failure manually just to understand what 
 
 ---
 
-# 72. TEST ARTIFACTS
+# 73. TEST ARTIFACTS
 
 For failed integration/UI tests, preserve useful artifacts where practical.
 
@@ -1533,7 +1578,7 @@ Avoid dumping enormous amounts of data on every successful test.
 
 ---
 
-# 73. SNAPSHOT / GOLDEN DIFFS
+# 74. SNAPSHOT / GOLDEN DIFFS
 
 When comparing structured output, produce understandable differences.
 
@@ -1549,7 +1594,7 @@ where those values are not part of the behavior under test.
 
 ---
 
-# 74. TEST THE TEST INFRASTRUCTURE
+# 75. TEST THE TEST INFRASTRUCTURE
 
 Verify important helpers themselves where warranted.
 
@@ -1564,7 +1609,7 @@ A broken test helper can create false confidence.
 
 ---
 
-# 75. DEVELOPER EXPERIENCE
+# 76. DEVELOPER EXPERIENCE
 
 Make testing easy.
 
@@ -1581,7 +1626,7 @@ A new developer should not need tribal knowledge to execute the suite.
 
 ---
 
-# 76. TEST DOCUMENTATION
+# 77. TEST DOCUMENTATION
 
 Add a concise testing document describing:
 
@@ -1599,7 +1644,7 @@ Do not write a giant testing manifesto that immediately becomes outdated.
 
 ---
 
-# 77. NEW FEATURE EXPECTATION
+# 78. NEW FEATURE EXPECTATION
 
 Establish a project convention:
 
@@ -1617,7 +1662,7 @@ Testing should evolve WITH the application.
 
 ---
 
-# 78. TEST REVIEW OF EXISTING CODE
+# 79. TEST REVIEW OF EXISTING CODE
 
 After the infrastructure exists, review the current codebase and identify important untested behavior.
 
@@ -1629,105 +1674,129 @@ Continue until the major application workflows and dangerous failure paths have 
 
 ---
 
-# 79. MINIMUM HIGH-VALUE TEST SET
+# 80. MINIMUM HIGH-VALUE TEST SET
 
 For a typical stateful application that imports/edits/saves work, ensure tests equivalent to these exist where applicable:
 
 ## Basic lifecycle
 
+```text
 Create
 → edit
 → save
 → load
 → verify
+```
 
 ## Import lifecycle
 
+```text
 Import
 → verify
 → edit
 → save
 → reload
 → verify
+```
 
 ## Dirty state
 
+```text
 Load
 → edit
 → dirty
 → save
 → clean
+```
 
 ## Cancel
 
+```text
 Edit
 → Open another
 → Save prompt
 → Cancel
 → current work intact
+```
 
 ## Nested cancel
 
+```text
 Edit
 → Open another
 → Save
 → Save As
 → Cancel
 → original work intact
+```
 
 ## Save failure
 
+```text
 Edit
 → Save fails
 → work remains intact and dirty
+```
 
 ## Failed import
 
+```text
 Valid work loaded
 → import bad data
 → failure
 → existing work intact
+```
 
 ## Round trip
 
+```text
 Complex state
 → save
 → destroy memory state
 → reload
 → equivalent state
+```
 
 ## Recovery
 
+```text
 Edit
 → recovery snapshot
 → simulate abnormal termination
 → restore
 → verify work
+```
 
 ## Corruption
 
+```text
 Attempt load of corrupt data
 → controlled failure
 → application remains usable
+```
 
 ## Repeated operations
 
+```text
 Save repeatedly
 → state remains correct
+```
 
 ## Stale async result
 
+```text
 A starts
 → B starts
 → B completes
 → A completes
 → B remains authoritative
+```
 
 These tests provide disproportionately high value.
 
 ---
 
-# 80. FINAL TEST SUITE VALIDATION
+# 81. FINAL TEST SUITE VALIDATION
 
 Once the testing system is implemented:
 
@@ -1765,7 +1834,7 @@ A test suite that stays green when important behavior is deliberately broken is 
 
 ---
 
-# 81. DO NOT CHASE TEST COUNT
+# 82. DO NOT CHASE TEST COUNT
 
 Never optimize for:
 
@@ -1782,7 +1851,7 @@ Ten excellent tests protecting critical workflows can be more valuable than one 
 
 ---
 
-# 82. DO NOT MAKE THE SUITE A MAINTENANCE NIGHTMARE
+# 83. DO NOT MAKE THE SUITE A MAINTENANCE NIGHTMARE
 
 Tests are production engineering assets.
 
@@ -1801,7 +1870,7 @@ If developers become afraid to change working code because 300 meaningless tests
 
 ---
 
-# 83. FINAL IMPLEMENTATION REPORT
+# 84. FINAL IMPLEMENTATION REPORT
 
 After implementing the testing strategy, provide a concise report containing:
 

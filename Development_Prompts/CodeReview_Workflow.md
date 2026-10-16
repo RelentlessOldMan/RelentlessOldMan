@@ -1,4 +1,4 @@
-# WORKFLOW AND DATA-LIFECYCLE HARDENING
+# Workflow & Data-Lifecycle Hardening Prompt
 
 This application represents an ongoing user workflow, not merely a collection of independent screens.
 
@@ -6,6 +6,7 @@ Perform a dedicated end-to-end review of the COMPLETE lifecycle of user work.
 
 Identify the application's actual workflow and state transitions, including things such as:
 
+```text
 Import/Create
 → Load
 → Edit
@@ -17,12 +18,42 @@ Import/Create
 → Modify
 → Save Again
 → Export/Finalize
+```
 
 Adapt this sequence to the application's actual behavior.
 
 The primary requirement is:
 
 THE USER MUST NEVER LOSE WORK, CORRUPT WORK, ACCIDENTALLY OVERWRITE WORK, OR BECOME CONFUSED ABOUT WHAT STATE THEIR WORK IS IN.
+
+## FIX WHAT YOU FIND
+
+This is NOT primarily a report-generation exercise.
+
+When you find a real data-loss, corruption, overwrite, or state-confusion issue and the appropriate fix is reasonably clear:
+
+1. Understand the surrounding workflow and state transitions.
+2. Fix it.
+3. Check every other transition and handler for the same pattern.
+4. Add a regression test that reproduces the original failure where practical.
+5. Rebuild and re-test as you go.
+6. Continue searching.
+
+Do not merely produce a giant list of hypothetical concerns and stop.
+
+## TEST SAFELY
+
+Many tests below deliberately provoke failures: permission denied, read-only destinations, disappearing destinations, corrupt files, crashes mid-save, fresh starts, and recent-file and persisted state.
+
+Exercise these ONLY on copies in a temporary/scratch directory. Never open, import, save over, corrupt, delete, or move the user's real documents or projects while testing.
+
+Before fresh-start, recent-file, or persisted-state tests, back up the application's settings/config location or redirect it to a scratch location, and restore it afterward.
+
+Undo any permission or read-only changes you make.
+
+Keep large-import and repeated-save tests bounded in size and duration so they don't fill the disk or lock up the machine.
+
+Delete generated test data when you finish.
 
 ## 1. MODEL THE WORKFLOW AS A STATE MACHINE
 
@@ -221,11 +252,13 @@ ONLY continue opening the new project if the resulting state actually permits it
 
 For example:
 
+```text
 Open New
 → Unsaved Changes
 → Save
 → Save As dialog
 → CANCEL
+```
 
 must NOT continue opening the new project.
 
@@ -295,19 +328,23 @@ Check:
 
 Test:
 
+```text
 Open A
 → edit
 → Save As B
 → edit
 → Save
+```
 
 The final Save should go to B, not A.
 
 Likewise:
 
+```text
 Open A
 → attempt Open B
 → B fails to load
+```
 
 The application should normally remain on A, with A's identity and state intact.
 
@@ -367,8 +404,9 @@ Do not add unnecessary complexity solely because autosave sounds nice.
 
 ## 14. MULTIPLE ITEMS / PROJECTS
 
-If the application edits multiple objects, cards, documents, records, etc., test transitions between them.
+If the application edits multiple objects, documents, records, items, etc., test transitions between them.
 
+```text
 Edit A
 → select B
 → return to A
@@ -387,6 +425,7 @@ Edit A
 
 Edit A
 → filter/search so A disappears
+```
 
 Make sure edits are committed or retained according to the application's intended model.
 
@@ -483,6 +522,7 @@ Do not only test isolated features.
 
 Perform complete realistic sessions such as:
 
+```text
 SESSION A:
 Launch
 → Import
@@ -545,6 +585,7 @@ Launch
 → Save again
 → Restart
 → Verify state again
+```
 
 Create additional journeys specific to THIS application.
 
@@ -556,21 +597,58 @@ At every potentially destructive workflow transition, ask:
 
 The safe pattern should generally be:
 
+```text
 PRESERVE CURRENT VALID STATE
 → attempt new operation
 → validate new result
 → commit transition only after success
+```
 
 rather than:
 
+```text
 DESTROY CURRENT STATE
 → attempt operation
 → hope it succeeds.
+```
 
 Treat user-created work as precious.
 
 A UI inconvenience is annoying.
 
 Silent loss or corruption of someone's work is unacceptable.
+
+## FINAL VERIFICATION
+
+When you believe the workflow hardening pass is complete, assume you missed things and make another pass through every destructive transition.
+
+Review your own changes critically.
+
+Then:
+
+1. Build the project cleanly.
+2. Run the full relevant test suite, including the regression tests added during this pass.
+3. Re-run the Import → Edit → Save → Reload round-trip test.
+4. Re-run every complete user journey, including the successful, failed, canceled, repeated, and interrupted paths.
+5. Recheck every Save / Don't Save / Cancel branch and every chained cancellation.
+6. Review the final diff for accidental behavior changes, especially to file formats and persisted data.
+7. Remove debugging artifacts and generated test data introduced during the work.
+
+Do not declare completion simply because the application builds and the tests pass.
+
+## FINAL REPORT
+
+After completing the work, provide a concise report containing:
+
+- Data-loss, corruption, and overwrite bugs fixed
+- Workflow transitions hardened
+- Cancellation and unsaved-changes bugs fixed
+- Persistence/round-trip gaps fixed
+- Tests added or changed
+- User journeys exercised, and how
+- Remaining risks to user work
+- Anything you intentionally did NOT change and why
+
+Do not pad this with trivial changes.
 
 Do not finish this pass until you have deliberately exercised the application's major workflows end-to-end, including successful, failed, canceled, repeated, and interrupted paths.

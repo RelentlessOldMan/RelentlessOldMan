@@ -30,7 +30,23 @@ Do not mechanically treat this as a checklist.
 
 ---
 
-# 1. FIRST UNDERSTAND THE UI
+## TEST SAFELY
+
+Many tests below deliberately provoke failures: permission denied, read-only files, missing or invalid paths, corrupt data, fresh starts, and persisted window state.
+
+Exercise these ONLY on copies in a temporary/scratch directory. Never point the application at the user's real documents, projects, or folders when testing destructive or failure scenarios.
+
+Before fresh-start or persisted-UI-state tests (window position, splitters, recent files, preferences), back up the application's settings/config location or redirect it to a scratch location, and restore it afterward.
+
+Undo any permission or read-only changes you make.
+
+Keep "very many items" and long-content tests bounded in size and duration so they don't fill the disk or lock up the machine.
+
+Delete generated test data when you finish.
+
+---
+
+## 1. FIRST UNDERSTAND THE UI
 
 Before changing things, inspect the application and determine:
 
@@ -65,7 +81,7 @@ Think about the UI as a state machine.
 
 ---
 
-# 2. UI STATE CORRECTNESS
+## 2. UI STATE CORRECTNESS
 
 This is extremely important.
 
@@ -140,7 +156,7 @@ Ask constantly:
 
 ---
 
-# 3. CANCELLATION PATHS
+## 3. CANCELLATION PATHS
 
 Aggressively test cancellation.
 
@@ -179,17 +195,21 @@ Audit every file picker, folder picker, confirmation dialog, color picker, edito
 
 Also look for accidental fall-through such as:
 
+```text
 if canceled -> continue anyway
+```
 
 or:
 
+```text
 if canceled -> use previous/default value
+```
 
 unless that behavior is explicitly intended.
 
 ---
 
-# 4. BUTTON CONSISTENCY
+## 4. BUTTON CONSISTENCY
 
 Perform a complete button consistency audit.
 
@@ -217,11 +237,13 @@ Buttons serving similar purposes should look and behave similarly.
 
 Avoid situations like:
 
+```text
 [ Save ]
 
 [        Cancel        ]
 
 [OK]
+```
 
 when those buttons logically belong to the same visual group.
 
@@ -239,7 +261,7 @@ The goal is visual consistency, not mechanical uniformity.
 
 ---
 
-# 5. CONTROL CONSISTENCY
+## 5. CONTROL CONSISTENCY
 
 Perform the same audit for:
 
@@ -279,7 +301,7 @@ Look for subtle inconsistencies that make the application feel homemade or unfin
 
 ---
 
-# 6. ALIGNMENT AND SPACING
+## 6. ALIGNMENT AND SPACING
 
 Inspect the UI carefully for:
 
@@ -305,7 +327,7 @@ Controls that visually belong together should look like they belong together.
 
 ---
 
-# 7. WIDTH AND SIZING
+## 7. WIDTH AND SIZING
 
 Review control widths intelligently.
 
@@ -325,7 +347,7 @@ Prefer sensible sizing based on expected content.
 
 ---
 
-# 8. WINDOW RESIZING
+## 8. WINDOW RESIZING
 
 Aggressively resize every resizable window.
 
@@ -356,13 +378,24 @@ Look for:
 - Horizontal scrollbars appearing unnecessarily
 - Content becoming unusable
 
+For browser-based UIs, also test:
+
+- Narrow/mobile viewport widths (down to roughly 320 CSS pixels)
+- Tablet and very wide desktop viewports
+- Browser zoom from 50% to 200%
+- No horizontal page scrolling at any reasonable width
+- Content reflowing rather than clipping or overflowing
+- Touch targets large enough to tap reliably (roughly 44x44 CSS pixels)
+- Hover-only interactions that have no touch equivalent
+- Light and dark appearance via `prefers-color-scheme`
+
 Define reasonable minimum window sizes where appropriate.
 
 Do not allow resizing into obviously broken layouts.
 
 ---
 
-# 9. DIALOG BEHAVIOR
+## 9. DIALOG BEHAVIOR
 
 Audit every dialog.
 
@@ -391,7 +424,7 @@ Never assume closing a dialog means success.
 
 ---
 
-# 10. FILE AND FOLDER DIALOGS
+## 10. FILE AND FOLDER DIALOGS
 
 Audit EVERY file/folder operation.
 
@@ -425,7 +458,7 @@ Test canceling these repeatedly.
 
 ---
 
-# 11. KEYBOARD BEHAVIOR
+## 11. KEYBOARD BEHAVIOR
 
 Use the application without the mouse.
 
@@ -454,7 +487,7 @@ Escape should cancel/close where users reasonably expect it.
 
 ---
 
-# 12. FOCUS MANAGEMENT
+## 12. FOCUS MANAGEMENT
 
 Look for:
 
@@ -472,7 +505,7 @@ After an operation, ask:
 
 ---
 
-# 13. DOUBLE-CLICK / RAPID CLICK TESTING
+## 13. DOUBLE-CLICK / RAPID CLICK TESTING
 
 Pretend the user has absolutely no patience.
 
@@ -498,7 +531,7 @@ Long-running actions should generally prevent accidental duplicate invocation.
 
 ---
 
-# 14. SELECTION BEHAVIOR
+## 14. SELECTION BEHAVIOR
 
 Test:
 
@@ -519,7 +552,7 @@ Never leave UI displaying properties/actions for an object that no longer exists
 
 ---
 
-# 15. EMPTY STATES
+## 15. EMPTY STATES
 
 Test the application with:
 
@@ -538,16 +571,18 @@ Empty states should not look like broken states.
 
 ---
 
-# 16. TEXT AND LABEL CONSISTENCY
+## 16. TEXT AND LABEL CONSISTENCY
 
 Audit wording.
 
 Look for inconsistent terminology such as:
 
+```text
 "Remove" in one place
 "Delete" elsewhere
 "Load" elsewhere
 "Open" elsewhere
+```
 
 when they mean the same thing.
 
@@ -570,7 +605,7 @@ Avoid technical implementation terminology leaking into user-facing UI unless th
 
 ---
 
-# 17. ERROR UI
+## 17. ERROR UI
 
 Force operations to fail where practical.
 
@@ -601,7 +636,7 @@ After dismissing an error, the application should remain usable whenever recover
 
 ---
 
-# 18. VALIDATION
+## 18. VALIDATION
 
 Test every editable field.
 
@@ -630,7 +665,7 @@ Prevent impossible values where the UI control itself can reasonably enforce the
 
 ---
 
-# 19. UNSAVED CHANGES / DIRTY STATE
+## 19. UNSAVED CHANGES / DIRTY STATE
 
 If applicable, thoroughly test unsaved changes.
 
@@ -651,7 +686,7 @@ But also don't annoy users with "unsaved changes" prompts when nothing actually 
 
 ---
 
-# 20. DESTRUCTIVE ACTIONS
+## 20. DESTRUCTIVE ACTIONS
 
 Review delete/remove/reset/overwrite/replace operations.
 
@@ -673,7 +708,7 @@ After destructive actions, make sure:
 
 ---
 
-# 21. LOADING / BUSY STATES
+## 21. LOADING / BUSY STATES
 
 For operations that take noticeable time:
 
@@ -696,17 +731,21 @@ MAKE SURE THE UI RETURNS TO NORMAL AFTER FAILURE.
 
 Look for code paths where:
 
+```text
 busy = true
+```
 
 happens, but:
 
+```text
 busy = false
+```
 
 doesn't happen on every exit path.
 
 ---
 
-# 22. UI STATE SHOULD REFLECT REAL STATE
+## 22. UI STATE SHOULD REFLECT REAL STATE
 
 Never let visual state lie.
 
@@ -725,7 +764,7 @@ Synchronize UI state with actual application state.
 
 ---
 
-# 23. TOOLTIP AUDIT
+## 23. TOOLTIP AUDIT
 
 Check whether controls whose purpose isn't obvious need tooltips.
 
@@ -733,19 +772,23 @@ Tooltips should explain useful information, not simply repeat the label.
 
 Bad:
 
+```text
 Button: Export
 Tooltip: Export
+```
 
 Useful:
 
+```text
 Button: Export
-Tooltip: Export the current card as a PNG image.
+Tooltip: Export the current document as a PNG image.
+```
 
 Do not add tooltips to everything indiscriminately.
 
 ---
 
-# 24. VISUAL HIERARCHY
+## 24. VISUAL HIERARCHY
 
 Make sure the UI clearly communicates:
 
@@ -763,7 +806,7 @@ Do this while respecting the application's existing design language.
 
 ---
 
-# 25. COLORS AND THEMING
+## 25. COLORS AND THEMING
 
 If the application supports themes or dark mode, test them.
 
@@ -783,7 +826,7 @@ Avoid hardcoded visual values when the framework provides theme-aware resources.
 
 ---
 
-# 26. DPI / DISPLAY SCALING
+## 26. DPI / DISPLAY SCALING
 
 Where applicable, inspect behavior at different scaling levels such as:
 
@@ -802,11 +845,19 @@ Look for:
 - Incorrect fixed pixel assumptions
 - Buttons unable to contain their text
 
+For browser-based UIs, also check:
+
+- Browser zoom from 50% to 200%
+- High-DPI/Retina displays (blurry raster images, icons, canvases)
+- Narrow/mobile viewports, including portrait and landscape
+- Touch-target size and spacing on touch devices
+- Light and dark appearance via `prefers-color-scheme`, including images, icons, borders, and form controls
+
 The application should not only work on the developer's exact monitor configuration.
 
 ---
 
-# 27. LONG / UNUSUAL CONTENT
+## 27. LONG / UNUSUAL CONTENT
 
 Test the UI with realistic worst-case content.
 
@@ -834,7 +885,7 @@ Look for:
 
 ---
 
-# 28. SCROLLING
+## 28. SCROLLING
 
 Inspect every scrollable region.
 
@@ -850,7 +901,7 @@ Check:
 
 ---
 
-# 29. LISTS / TABLES / TREES
+## 29. LISTS / TABLES / TREES
 
 For every collection UI, test:
 
@@ -872,7 +923,7 @@ Look for stale rows, duplicates, selection bugs, poor column sizing, and perform
 
 ---
 
-# 30. MENUS AND CONTEXT MENUS
+## 30. MENUS AND CONTEXT MENUS
 
 Audit all menus.
 
@@ -894,7 +945,7 @@ A context menu should not offer an operation that cannot currently work.
 
 ---
 
-# 31. DEFAULTS
+## 31. DEFAULTS
 
 Review defaults throughout the UI.
 
@@ -919,7 +970,7 @@ Defaults should make the common path easy.
 
 ---
 
-# 32. PERSISTED UI STATE
+## 32. PERSISTED UI STATE
 
 If UI settings persist between sessions, test:
 
@@ -945,7 +996,7 @@ Recover gracefully.
 
 ---
 
-# 33. STARTUP AND SHUTDOWN
+## 33. STARTUP AND SHUTDOWN
 
 Test the UI from a completely fresh start.
 
@@ -965,7 +1016,7 @@ Look for:
 
 ---
 
-# 34. WEIRD USER SEQUENCES
+## 34. WEIRD USER SEQUENCES
 
 Do things in orders the developer probably didn't expect.
 
@@ -999,7 +1050,7 @@ Look specifically for state-machine bugs.
 
 ---
 
-# 35. EVENT HANDLER PROBLEMS
+## 35. EVENT HANDLER PROBLEMS
 
 Inspect the implementation for:
 
@@ -1016,7 +1067,7 @@ Distinguish programmatic state synchronization from actual user intent where nec
 
 ---
 
-# 36. UI/BUSINESS LOGIC BOUNDARY
+## 36. UI/BUSINESS LOGIC BOUNDARY
 
 Look for cases where fragile UI behavior exists because business logic is buried directly inside event handlers.
 
@@ -1026,7 +1077,7 @@ UI event handlers should ideally coordinate operations rather than contain enorm
 
 ---
 
-# 37. ACCESSIBILITY BASICS
+## 37. ACCESSIBILITY BASICS
 
 Without turning this into a massive accessibility redesign, check obvious issues:
 
@@ -1043,7 +1094,7 @@ Fix obvious problems.
 
 ---
 
-# 38. CONSISTENCY PASS
+## 38. CONSISTENCY PASS
 
 After functional testing, perform a dedicated visual consistency pass across EVERY screen.
 
@@ -1067,7 +1118,7 @@ Centralize shared styling/resources where doing so reduces accidental inconsiste
 
 ---
 
-# 39. DO NOT OVER-ENGINEER
+## 39. DO NOT OVER-ENGINEER
 
 Do not turn this into a redesign project.
 
@@ -1086,7 +1137,7 @@ Fix things that improve consistency, usability, predictability, correctness, mai
 
 ---
 
-# 40. ACTUALLY RUN AND TEST THE UI
+## 40. ACTUALLY RUN AND TEST THE UI
 
 Do not rely exclusively on static source-code inspection if the environment allows the application to be run.
 
@@ -1126,7 +1177,7 @@ Static analysis alone is NOT sufficient for a UI hardening pass.
 
 ---
 
-# 41. SCREEN-BY-SCREEN PASS
+## 41. SCREEN-BY-SCREEN PASS
 
 After the general review, revisit EVERY significant:
 
@@ -1175,7 +1226,7 @@ What happens after returning to this screen later?
 
 ---
 
-# 42. SECOND PASS: TRY TO BREAK YOUR OWN FIXES
+## 42. SECOND PASS: TRY TO BREAK YOUR OWN FIXES
 
 After completing the first hardening pass, assume you missed things.
 
@@ -1205,7 +1256,7 @@ Review your own changes for regressions.
 
 ---
 
-# 43. FINAL POLISH PASS
+## 43. FINAL POLISH PASS
 
 Finally, inspect the application as though it were being shipped today.
 
@@ -1237,7 +1288,7 @@ These details matter.
 
 ---
 
-# FINAL VERIFICATION
+## FINAL VERIFICATION
 
 When you believe the UI hardening pass is complete:
 
@@ -1263,7 +1314,7 @@ A UI can compile perfectly and still be full of bugs.
 
 ---
 
-# FINAL REPORT
+## FINAL REPORT
 
 After completing the work, provide a concise report containing:
 

@@ -2,7 +2,7 @@
 
 ## 1. Mission
 
-Perform an exhaustive, adversarial, evidence-based review of the entire code differ implementation to identify every meaningful defect, weakness, ambiguity, or missed opportunity in how it detects, matches, classifies, represents, and reports differences between C and C++ source code.
+Perform an exhaustive, adversarial, evidence-based review of the entire CodeDiffer implementation to identify every meaningful defect, weakness, ambiguity, or missed opportunity in how it detects, matches, classifies, represents, and reports differences between C and C++ source code.
 
 The primary objective is to establish whether the tool **detects all changes within its declared comparison contract, reports them accurately, avoids false differences, and never silently discards or misattributes changes**.
 
@@ -16,13 +16,15 @@ Do not assume that a clean or empty diff means the inputs are equivalent.
 
 This review has two phases. **Phase 1 — audit:** do not modify code until the audit is complete; produce a comprehensive, prioritized report with exact code locations, concrete findings, minimal reproducers, root causes, recommended fixes, and regression tests. **Phase 2 — fix:** then fix the confirmed findings in priority order, with evidence for each (see the Phase 2 section near the end).
 
+**Safety:** use small corpora by default, and ask the user before any full-scale (~100 GB) compare or any compare against a network share. Point any results or output directory (`CODEDIFFER_RESULTS_DIR`) at a scratch folder, never inside a tree being compared. Run apply, merge, and other write operations only against scratch copies, never against real trees. Never delete or prune the user's saved results.
+
 ---
 
-# 2. Establish the Comparison Contract
+## 2. Establish the Comparison Contract
 
 Before evaluating the implementation, determine exactly what the tool promises to compare.
 
-## 2.1 Comparison granularity
+### 2.1 Comparison granularity
 
 Identify whether the tool supports:
 
@@ -49,7 +51,7 @@ Document which levels are supported and how they interact.
 
 Do not assume unsupported capabilities are defects. Identify undocumented limitations separately.
 
-## 2.2 Difference semantics
+### 2.2 Difference semantics
 
 Determine whether the tool performs:
 
@@ -68,7 +70,7 @@ For example, two expressions can have similar AST structures but different behav
 
 Do not describe structural equality as semantic equivalence unless the implementation actually establishes the required proof.
 
-## 2.3 Define comparison guarantees
+### 2.3 Define comparison guarantees
 
 Determine whether the tool guarantees:
 
@@ -86,7 +88,7 @@ Determine whether the tool guarantees:
 
 Document ambiguities and contradictions.
 
-## 2.4 Establish change classifications
+### 2.4 Establish change classifications
 
 Determine which categories the tool supports:
 
@@ -112,9 +114,9 @@ Investigate whether distinct categories are incorrectly merged.
 
 ---
 
-# 3. Fundamental Correctness Properties
+## 3. Fundamental Correctness Properties
 
-## 3.1 No missed differences
+### 3.1 No missed differences
 
 Find cases where meaningful changes disappear from the output.
 
@@ -130,7 +132,7 @@ Examples:
 
 Treat silent omission of an in-scope change as a correctness-critical defect.
 
-## 3.2 No fabricated differences
+### 3.2 No fabricated differences
 
 Find cases where unchanged code is incorrectly reported as changed.
 
@@ -145,7 +147,7 @@ Examples:
 
 Determine whether differences are real under the declared comparison contract.
 
-## 3.3 Accurate change attribution
+### 3.3 Accurate change attribution
 
 Determine whether a reported change is associated with the correct:
 
@@ -162,17 +164,17 @@ Determine whether a reported change is associated with the correct:
 
 A real change attributed to the wrong symbol is still a defect.
 
-## 3.4 Accurate old/new direction
+### 3.4 Accurate old/new direction
 
 Verify that additions and deletions are never reversed.
 
 Check whether old and new source locations are consistently associated with the correct revision.
 
-## 3.5 Complete result aggregation
+### 3.5 Complete result aggregation
 
 Ensure that differences discovered in one stage are not lost during later aggregation, deduplication, filtering, or output generation.
 
-## 3.6 No silent success on incomplete analysis
+### 3.6 No silent success on incomplete analysis
 
 If files cannot be read, parsed, matched, or compared, the tool must not report a complete clean result.
 
@@ -180,7 +182,7 @@ Incomplete analysis must remain distinguishable from verified equality.
 
 ---
 
-# 4. End-to-End Pipeline Audit
+## 4. End-to-End Pipeline Audit
 
 Map every stage:
 
@@ -224,9 +226,9 @@ A correct AST comparison cannot recover a source file silently omitted during di
 
 ---
 
-# 5. File Discovery and Input Correctness
+## 5. File Discovery and Input Correctness
 
-## 5.1 Complete file enumeration
+### 5.1 Complete file enumeration
 
 Test:
 
@@ -242,7 +244,7 @@ Test:
 - Files without extensions.
 - Case-sensitive and case-insensitive paths.
 
-## 5.2 Path identity
+### 5.2 Path identity
 
 Inspect:
 
@@ -258,7 +260,7 @@ Inspect:
 
 Determine whether two distinct files can be incorrectly merged or one file incorrectly treated as two.
 
-## 5.3 File pairing
+### 5.3 File pairing
 
 Investigate how old and new files are matched.
 
@@ -275,13 +277,13 @@ Test:
 
 Do not assume file identity is equivalent to path identity.
 
-## 5.4 Input stability
+### 5.4 Input stability
 
 Determine whether files changing during comparison can produce inconsistent results.
 
 Evaluate whether the tool uses snapshots or detects input mutation.
 
-## 5.5 Encoding and line endings
+### 5.5 Encoding and line endings
 
 Test:
 
@@ -299,9 +301,9 @@ Determine whether normalization hides meaningful changes or fabricates differenc
 
 ---
 
-# 6. Textual Difference Correctness
+## 6. Textual Difference Correctness
 
-## 6.1 Basic edit operations
+### 6.1 Basic edit operations
 
 Test:
 
@@ -317,7 +319,7 @@ Test:
 - Empty-to-nonempty changes.
 - Nonempty-to-empty changes.
 
-## 6.2 Repeated text
+### 6.2 Repeated text
 
 Construct adversarial examples containing:
 
@@ -331,7 +333,7 @@ Construct adversarial examples containing:
 
 Determine whether the differ selects valid and stable alignments.
 
-## 6.3 Diff algorithm correctness
+### 6.3 Diff algorithm correctness
 
 Inspect the actual algorithm.
 
@@ -347,13 +349,13 @@ If using Myers, LCS, patience diff, histogram diff, or another approach, evaluat
 
 Do not assume every diff algorithm guarantees a globally minimal edit script.
 
-## 6.4 Edit script reconstruction
+### 6.4 Edit script reconstruction
 
 For a textual diff, verify that applying the reported edit script to the old input reconstructs the new input exactly, except for explicitly documented normalization.
 
 This is a fundamental correctness invariant.
 
-## 6.5 Hunk boundaries
+### 6.5 Hunk boundaries
 
 Test:
 
@@ -367,7 +369,7 @@ Test:
 
 Ensure no changed lines are omitted or duplicated.
 
-## 6.6 Normalization
+### 6.6 Normalization
 
 Inspect whitespace, comment, and formatting normalization.
 
@@ -384,9 +386,9 @@ Examples:
 
 ---
 
-# 7. C/C++ Parsing Correctness
+## 7. C/C++ Parsing Correctness
 
-## 7.1 AST completeness
+### 7.1 AST completeness
 
 Determine whether every supported source construct is represented and compared.
 
@@ -394,7 +396,7 @@ Inspect AST visitors, matchers, and traversal logic.
 
 Look for node types silently skipped.
 
-## 7.2 Declarations and definitions
+### 7.2 Declarations and definitions
 
 Test:
 
@@ -409,7 +411,7 @@ Test:
 - Typedefs.
 - Type aliases.
 
-## 7.3 Statements
+### 7.3 Statements
 
 Test changes to:
 
@@ -426,7 +428,7 @@ Test changes to:
 - Exception handling.
 - Coroutine statements where supported.
 
-## 7.4 Expressions
+### 7.4 Expressions
 
 Test:
 
@@ -444,7 +446,7 @@ Test:
 - Lambda expressions.
 - Initializer lists.
 
-## 7.5 Literals
+### 7.5 Literals
 
 Test changes to:
 
@@ -459,19 +461,19 @@ Test changes to:
 
 Ensure literal spelling and semantic value are handled according to the comparison contract.
 
-## 7.6 Implicit AST nodes
+### 7.6 Implicit AST nodes
 
 Investigate whether implicit casts, constructors, destructors, and compiler-generated nodes cause false differences or conceal real changes.
 
-## 7.7 Unsupported syntax
+### 7.7 Unsupported syntax
 
 Determine whether unsupported constructs produce explicit diagnostics rather than false equality.
 
 ---
 
-# 8. Symbol Identity and Entity Matching
+## 8. Symbol Identity and Entity Matching
 
-## 8.1 Declaration identity
+### 8.1 Declaration identity
 
 Inspect use of:
 
@@ -486,7 +488,7 @@ Inspect use of:
 
 Determine whether the tool uses reliable semantic identities.
 
-## 8.2 Same-name collisions
+### 8.2 Same-name collisions
 
 Test:
 
@@ -501,7 +503,7 @@ Test:
 
 Ensure unrelated entities are not matched.
 
-## 8.3 Overloads
+### 8.3 Overloads
 
 Verify exact matching of overloads with different:
 
@@ -512,11 +514,11 @@ Verify exact matching of overloads with different:
 - Constraints.
 - Calling conventions.
 
-## 8.4 Entity renaming
+### 8.4 Entity renaming
 
 Determine whether a rename is classified correctly rather than as an unrelated deletion and addition, when rename detection is supported.
 
-## 8.5 Entity movement
+### 8.5 Entity movement
 
 Test movement:
 
@@ -528,7 +530,7 @@ Test movement:
 
 Determine whether movement is distinguished from modification.
 
-## 8.6 Ambiguous matching
+### 8.6 Ambiguous matching
 
 Construct cases with several plausible matching candidates.
 
@@ -539,7 +541,7 @@ Determine whether the tool:
 - Uses deterministic tie-breaking.
 - Avoids hiding unmatched changes.
 
-## 8.7 One-to-many and many-to-one changes
+### 8.7 One-to-many and many-to-one changes
 
 Test function splitting and merging.
 
@@ -547,9 +549,9 @@ Do not assume all changes can be represented by one-to-one entity matches.
 
 ---
 
-# 9. C++ Templates and Generic Code
+## 9. C++ Templates and Generic Code
 
-## 9.1 Function templates
+### 9.1 Function templates
 
 Test changes to:
 
@@ -561,7 +563,7 @@ Test changes to:
 - Explicit specializations.
 - Explicit instantiations.
 
-## 9.2 Class templates
+### 9.2 Class templates
 
 Test:
 
@@ -572,11 +574,11 @@ Test:
 - Static members.
 - Nested templates.
 
-## 9.3 Dependent expressions
+### 9.3 Dependent expressions
 
 Determine whether changes inside dependent expressions are detected before or after instantiation as appropriate.
 
-## 9.4 SFINAE and concepts
+### 9.4 SFINAE and concepts
 
 Test:
 
@@ -587,7 +589,7 @@ Test:
 - Constraint changes.
 - Overload viability changes.
 
-## 9.5 Compile-time constructs
+### 9.5 Compile-time constructs
 
 Test:
 
@@ -599,11 +601,11 @@ Test:
 - `decltype`.
 - `noexcept`.
 
-## 9.6 Template matching
+### 9.6 Template matching
 
 Ensure template declarations are not incorrectly matched to unrelated specializations or instantiations.
 
-## 9.7 Instantiation-dependent differences
+### 9.7 Instantiation-dependent differences
 
 Investigate whether the tool can detect differences that emerge only under particular template instantiations.
 
@@ -611,9 +613,9 @@ Document limitations explicitly.
 
 ---
 
-# 10. C++ Classes and Object Model
+## 10. C++ Classes and Object Model
 
-## 10.1 Class declarations
+### 10.1 Class declarations
 
 Test changes to:
 
@@ -628,7 +630,7 @@ Test changes to:
 - Nested types.
 - Attributes.
 
-## 10.2 Inheritance
+### 10.2 Inheritance
 
 Test:
 
@@ -639,7 +641,7 @@ Test:
 - Changed base-class access.
 - Changed base-class order.
 
-## 10.3 Virtual dispatch
+### 10.3 Virtual dispatch
 
 Test:
 
@@ -651,7 +653,7 @@ Test:
 - Changed pure virtual declarations.
 - Changed virtual destructors.
 
-## 10.4 Object layout
+### 10.4 Object layout
 
 Determine whether the tool detects changes affecting:
 
@@ -665,7 +667,7 @@ Determine whether the tool detects changes affecting:
 
 If ABI analysis is unsupported, ensure the tool does not imply that structural equality guarantees ABI compatibility.
 
-## 10.5 Special member functions
+### 10.5 Special member functions
 
 Test changes to:
 
@@ -677,15 +679,15 @@ Test changes to:
 - Deleted functions.
 - Defaulted functions.
 
-## 10.6 Operator overloading
+### 10.6 Operator overloading
 
 Verify changes to overloaded operators are correctly identified and attributed.
 
 ---
 
-# 11. Preprocessor and Macro Differences
+## 11. Preprocessor and Macro Differences
 
-## 11.1 Macro definitions
+### 11.1 Macro definitions
 
 Test:
 
@@ -698,15 +700,15 @@ Test:
 - Stringification.
 - Nested expansion.
 
-## 11.2 Macro invocation changes
+### 11.2 Macro invocation changes
 
 Determine whether changes at invocation sites are detected.
 
-## 11.3 Macro expansion changes
+### 11.3 Macro expansion changes
 
 Investigate cases where unchanged source expands differently because a macro definition changed.
 
-## 11.4 Conditional compilation
+### 11.4 Conditional compilation
 
 Test:
 
@@ -719,11 +721,11 @@ Test:
 
 Determine whether changes in inactive branches are reported or intentionally excluded.
 
-## 11.5 Configuration-specific differences
+### 11.5 Configuration-specific differences
 
 Compare behavior under different macro definitions and compiler flags.
 
-## 11.6 Macro source mapping
+### 11.6 Macro source mapping
 
 Determine whether changes are attributed to:
 
@@ -734,7 +736,7 @@ Determine whether changes are attributed to:
 
 Avoid misleading source locations.
 
-## 11.7 Include changes
+### 11.7 Include changes
 
 Test:
 
@@ -745,15 +747,15 @@ Test:
 - Conditional includes.
 - Include path resolution changes.
 
-## 11.8 Build-configuration dependencies
+### 11.8 Build-configuration dependencies
 
 Identify cases where the same source text produces different behavior under changed compiler flags.
 
 ---
 
-# 12. Semantic Difference Classification
+## 12. Semantic Difference Classification
 
-## 12.1 Separate syntax from semantics
+### 12.1 Separate syntax from semantics
 
 Determine whether the tool distinguishes:
 
@@ -770,13 +772,13 @@ Determine whether the tool distinguishes:
 
 Do not classify a change as behaviorally equivalent merely because its AST shape is similar.
 
-## 12.2 Variable renaming
+### 12.2 Variable renaming
 
 Test local variable renames that do not alter binding.
 
 Distinguish these from renames that change lookup or shadowing.
 
-## 12.3 Expression equivalence
+### 12.3 Expression equivalence
 
 Test transformations such as:
 
@@ -784,13 +786,13 @@ Test transformations such as:
 
 Do not assume equivalence without accounting for types, overloads, floating-point behavior, volatile accesses, and side effects.
 
-## 12.4 Reordered operations
+### 12.4 Reordered operations
 
 Test statements reordered without textual additions or deletions.
 
 Determine whether the tool detects potential changes in execution order.
 
-## 12.5 Control-flow changes
+### 12.5 Control-flow changes
 
 Test:
 
@@ -802,7 +804,7 @@ Test:
 - Changed switch fallthrough.
 - Changed short-circuit evaluation.
 
-## 12.6 Side-effect changes
+### 12.6 Side-effect changes
 
 Test changes involving:
 
@@ -816,7 +818,7 @@ Test changes involving:
 - Locking.
 - Exceptions.
 
-## 12.7 Type changes
+### 12.7 Type changes
 
 Test:
 
@@ -830,47 +832,47 @@ Test:
 - Alignment.
 - Template arguments.
 
-## 12.8 Symbol-binding changes
+### 12.8 Symbol-binding changes
 
 Construct tests where source text remains identical but resolves to a different declaration because surrounding code changed.
 
 This is a particularly important adversarial category.
 
-## 12.9 Semantic uncertainty
+### 12.9 Semantic uncertainty
 
 If equivalence cannot be established, report uncertainty rather than claiming no semantic change.
 
 ---
 
-# 13. Change Propagation and Impact Analysis
+## 13. Change Propagation and Impact Analysis
 
 If supported, investigate whether the tool identifies code affected indirectly by changes.
 
-## 13.1 Direct changes
+### 13.1 Direct changes
 
 Distinguish directly modified source from unchanged source affected by those modifications.
 
-## 13.2 Caller impact
+### 13.2 Caller impact
 
 Determine whether changes to a function can affect callers.
 
-## 13.3 Type impact
+### 13.3 Type impact
 
 Investigate changes to shared types, layouts, aliases, and templates.
 
-## 13.4 Macro impact
+### 13.4 Macro impact
 
 Determine whether one macro modification affects many unchanged invocation sites.
 
-## 13.5 Global state impact
+### 13.5 Global state impact
 
 Investigate changes to global initialization and shared state.
 
-## 13.6 Header impact
+### 13.6 Header impact
 
 Determine whether header changes affect multiple translation units.
 
-## 13.7 Impact classification
+### 13.7 Impact classification
 
 Do not conflate:
 
@@ -883,53 +885,53 @@ If impact analysis is unsupported, document it as a separate possible enhancemen
 
 ---
 
-# 14. Source Locations and Mapping
+## 14. Source Locations and Mapping
 
-## 14.1 Line and column accuracy
+### 14.1 Line and column accuracy
 
 Verify every reported location against the original inputs.
 
-## 14.2 Old/new source ranges
+### 14.2 Old/new source ranges
 
 Ensure source ranges are associated with the correct revision.
 
-## 14.3 Insertions and deletions
+### 14.3 Insertions and deletions
 
 Test changes that have no corresponding source range on one side.
 
-## 14.4 Macro locations
+### 14.4 Macro locations
 
 Distinguish spelling locations from expansion locations.
 
-## 14.5 Multi-line constructs
+### 14.5 Multi-line constructs
 
 Test functions, macros, templates, and declarations spanning many lines.
 
-## 14.6 Moved code
+### 14.6 Moved code
 
 Determine whether moved code retains accurate original and destination locations.
 
-## 14.7 Overlapping changes
+### 14.7 Overlapping changes
 
 Ensure nested changes do not create contradictory or misleading ranges.
 
-## 14.8 Source-map validation
+### 14.8 Source-map validation
 
 Verify that every reported location resolves to the intended text.
 
 ---
 
-# 15. Difference Aggregation and Deduplication
+## 15. Difference Aggregation and Deduplication
 
-## 15.1 Duplicate reports
+### 15.1 Duplicate reports
 
 Identify cases where one source change generates multiple redundant findings.
 
-## 15.2 Lost findings
+### 15.2 Lost findings
 
 Determine whether deduplication incorrectly merges distinct changes.
 
-## 15.3 Nested differences
+### 15.3 Nested differences
 
 Investigate reporting at multiple levels.
 
@@ -941,25 +943,25 @@ Example:
 
 Determine whether the output preserves useful detail without double-counting changes.
 
-## 15.4 Cross-translation-unit duplication
+### 15.4 Cross-translation-unit duplication
 
 A header change may appear in many translation units.
 
 Determine whether it is reported once with multiple affected contexts or repeatedly as unrelated changes.
 
-## 15.5 Stable ordering
+### 15.5 Stable ordering
 
 Ensure output ordering is deterministic.
 
-## 15.6 Summary consistency
+### 15.6 Summary consistency
 
 Verify that summary counts agree with detailed findings.
 
 ---
 
-# 16. Output Integrity
+## 16. Output Integrity
 
-## 16.1 Human-readable output
+### 16.1 Human-readable output
 
 Determine whether the report accurately communicates:
 
@@ -969,7 +971,7 @@ Determine whether the report accurately communicates:
 - Whether matching was uncertain.
 - Whether analysis was incomplete.
 
-## 16.2 Machine-readable output
+### 16.2 Machine-readable output
 
 If JSON, XML, or another structured format is supported, validate:
 
@@ -983,11 +985,11 @@ If JSON, XML, or another structured format is supported, validate:
 - Nested relationships.
 - Completeness status.
 
-## 16.3 Output filtering
+### 16.3 Output filtering
 
 Test whether filters silently remove changes that should remain visible under the selected options.
 
-## 16.4 Summary accuracy
+### 16.4 Summary accuracy
 
 Verify counts for:
 
@@ -1001,13 +1003,13 @@ Verify counts for:
 - Moved symbols.
 - Unknown or failed comparisons.
 
-## 16.5 Empty results
+### 16.5 Empty results
 
 An empty result must mean that no in-scope differences were found under a completed comparison, not that analysis failed.
 
 ---
 
-# 17. Determinism and Stability
+## 17. Determinism and Stability
 
 Run identical comparisons repeatedly.
 
@@ -1036,7 +1038,7 @@ Equivalent inputs and configuration should produce stable results.
 
 ---
 
-# 18. Incremental Comparison and Cache Correctness
+## 18. Incremental Comparison and Cache Correctness
 
 If caching or incremental analysis is supported, inspect:
 
@@ -1058,11 +1060,11 @@ Stale cached analysis must not cause missed differences.
 
 ---
 
-# 19. Adversarial Test Corpus
+## 19. Adversarial Test Corpus
 
 Construct a comprehensive corpus of small C/C++ projects with known expected differences.
 
-## 19.1 Atomic change tests
+### 19.1 Atomic change tests
 
 Generate one-change programs for every supported construct.
 
@@ -1080,23 +1082,23 @@ Examples:
 - Change one overload.
 - Change one template argument.
 
-## 19.2 Similar-symbol tests
+### 19.2 Similar-symbol tests
 
 Generate projects containing many nearly identical declarations and definitions.
 
 Determine whether the differ matches the correct entities.
 
-## 19.3 Rename and move tests
+### 19.3 Rename and move tests
 
 Test renames, moves, splits, merges, and combinations of those changes with body modifications.
 
-## 19.4 Repeated-code tests
+### 19.4 Repeated-code tests
 
 Generate files containing many identical or near-identical functions.
 
 Investigate ambiguous matching and alignment.
 
-## 19.5 Cross-file tests
+### 19.5 Cross-file tests
 
 Create changes involving:
 
@@ -1108,15 +1110,15 @@ Create changes involving:
 - External linkage.
 - Anonymous namespaces.
 
-## 19.6 Macro tests
+### 19.6 Macro tests
 
 Generate macro-heavy source with known textual and expanded differences.
 
-## 19.7 Configuration tests
+### 19.7 Configuration tests
 
 Run the same source pairs under different compiler flags and macro definitions.
 
-## 19.8 Large synthetic projects
+### 19.8 Large synthetic projects
 
 Generate thousands of files, declarations, and controlled changes.
 
@@ -1131,7 +1133,7 @@ Measure:
 - Peak memory.
 - Determinism.
 
-## 19.9 Malformed input
+### 19.9 Malformed input
 
 Test:
 
@@ -1144,7 +1146,7 @@ Test:
 
 Verify explicit incomplete-analysis reporting.
 
-## 19.10 Combined-feature tests
+### 19.10 Combined-feature tests
 
 Construct adversarial combinations.
 
@@ -1163,15 +1165,15 @@ Examples:
 
 ---
 
-# 20. Metamorphic Testing
+## 20. Metamorphic Testing
 
 Use transformations with predictable effects on comparison results.
 
-## 20.1 Identity
+### 20.1 Identity
 
 Comparing an input with itself must produce no differences under every supported mode.
 
-## 20.2 Reversal
+### 20.2 Reversal
 
 Comparing B against A should correspond to reversing the changes from A against B.
 
@@ -1179,29 +1181,29 @@ Added and removed classifications must invert appropriately.
 
 Rename and move relationships should reverse consistently.
 
-## 20.3 Irrelevant addition
+### 20.3 Irrelevant addition
 
 Adding unrelated code should not alter matching or classifications for unchanged entities.
 
-## 20.4 Formatting transformation
+### 20.4 Formatting transformation
 
 Applying a formatting-only transformation should produce results consistent with the configured normalization policy.
 
-## 20.5 Consistent renaming
+### 20.5 Consistent renaming
 
 Consistently renaming a symbol should produce predictable rename or modification results.
 
-## 20.6 File-order permutation
+### 20.6 File-order permutation
 
 Changing enumeration order must not change the semantic diff.
 
-## 20.7 Composition
+### 20.7 Composition
 
 For a sequence A → B → C, verify that reported changes are internally consistent with the source states.
 
 Do not assume edit scripts are simply additive because later edits may undo earlier changes.
 
-## 20.8 Mutation sensitivity
+### 20.8 Mutation sensitivity
 
 Introduce a deliberate one-token change into otherwise identical inputs.
 
@@ -1209,7 +1211,7 @@ Verify that the tool detects it unless the comparison contract explicitly exclud
 
 ---
 
-# 21. Differential Testing Against Reference Tools
+## 21. Differential Testing Against Reference Tools
 
 Where practical, compare results with established tools.
 
@@ -1233,41 +1235,41 @@ Disagreements should trigger investigation rather than automatic acceptance of e
 
 ---
 
-# 22. Ground Truth and Test Oracles
+## 22. Ground Truth and Test Oracles
 
-## 22.1 Exact textual oracle
+### 22.1 Exact textual oracle
 
 For textual mode, verify that applying the edit script reconstructs the target input.
 
-## 22.2 Known-change oracle
+### 22.2 Known-change oracle
 
 Generate input pairs from controlled mutations.
 
 Record the exact intended change.
 
-## 22.3 Symbol identity oracle
+### 22.3 Symbol identity oracle
 
 Use compiler semantic information to verify entity matching where available.
 
-## 22.4 Source-range oracle
+### 22.4 Source-range oracle
 
 Verify reported ranges against actual input substrings.
 
-## 22.5 Semantic test oracle
+### 22.5 Semantic test oracle
 
 Where the tool claims semantic properties, use compilation, execution, or stronger analysis as appropriate.
 
-## 22.6 Completeness oracle
+### 22.6 Completeness oracle
 
 Verify that every discovered input file receives a valid comparison outcome.
 
-## 22.7 Failure oracle
+### 22.7 Failure oracle
 
 Intentionally cause analysis failures and verify that the tool reports incomplete results rather than equality.
 
 ---
 
-# 23. Error Handling and Failure Propagation
+## 23. Error Handling and Failure Propagation
 
 Investigate:
 
@@ -1297,7 +1299,7 @@ Silent omission is unacceptable.
 
 ---
 
-# 24. Performance and Scalability
+## 24. Performance and Scalability
 
 Although correctness is the primary objective, investigate inefficient comparison behavior.
 
@@ -1331,7 +1333,7 @@ Do not recommend performance optimizations that reduce comparison completeness o
 
 ---
 
-# 25. Security and Input Robustness
+## 25. Security and Input Robustness
 
 Treat input repositories and build metadata as potentially untrusted.
 
@@ -1356,9 +1358,11 @@ Ensure comparison does not execute target application code unless explicitly aut
 
 ---
 
-# 26. Required Review Procedure
+## 26. Required Review Procedure
 
-## Phase 1: Contract and architecture
+All of the steps below belong to Phase 1 (audit). They are numbered as steps so they are not confused with the audit and fix phases; do not change code while performing them.
+
+### Step 1: Contract and architecture
 
 1. Document supported comparison modes.
 2. Document difference semantics.
@@ -1369,7 +1373,7 @@ Ensure comparison does not execute target application code unless explicitly aut
 7. Identify failure-handling behavior.
 8. Inventory existing tests.
 
-## Phase 2: Input and textual correctness
+### Step 2: Input and textual correctness
 
 Review:
 
@@ -1381,7 +1385,7 @@ Review:
 - Hunk reconstruction.
 - Source locations.
 
-## Phase 3: Parsing and symbol identity
+### Step 3: Parsing and symbol identity
 
 Review:
 
@@ -1393,7 +1397,7 @@ Review:
 - Translation-unit boundaries.
 - Macro handling.
 
-## Phase 4: Matching and classification
+### Step 4: Matching and classification
 
 Review:
 
@@ -1405,7 +1409,7 @@ Review:
 - Structural differences.
 - Semantic claims.
 
-## Phase 5: Aggregation and output
+### Step 5: Aggregation and output
 
 Review:
 
@@ -1416,17 +1420,17 @@ Review:
 - Machine-readable output.
 - Incomplete-analysis reporting.
 
-## Phase 6: Adversarial testing
+### Step 6: Adversarial testing
 
 Construct minimal reproducers for suspected defects and missing language-feature coverage.
 
-## Phase 7: Cross-component investigation
+### Step 7: Cross-component investigation
 
 Trace errors across multiple pipeline stages.
 
 Determine root causes rather than fixing only symptoms.
 
-## Phase 8: Completeness pass
+### Step 8: Completeness pass
 
 Revisit every major category and search deliberately for missed change-detection failures.
 
@@ -1434,9 +1438,9 @@ Maintain a persistent review ledger.
 
 ---
 
-# 27. Finding Classification
+## 27. Finding Classification
 
-## Critical
+#### Critical
 
 - Real changes silently omitted.
 - Different code incorrectly classified as equivalent under the declared contract.
@@ -1445,7 +1449,7 @@ Maintain a persistent review ledger.
 - Widespread incorrect entity matching.
 - Corrupted or contradictory results.
 
-## High
+#### High
 
 - Significant false differences.
 - Incorrect rename or move detection.
@@ -1455,7 +1459,7 @@ Maintain a persistent review ledger.
 - Cross-translation-unit matching defects.
 - Lost changes during aggregation.
 
-## Medium
+#### Medium
 
 - Ambiguous matching without adequate diagnostics.
 - Duplicate reports.
@@ -1464,7 +1468,7 @@ Maintain a persistent review ledger.
 - Incremental comparison inconsistencies.
 - Determinism problems.
 
-## Low
+#### Low
 
 - Cosmetic output problems.
 - Minor redundant differences.
@@ -1476,7 +1480,7 @@ Severity must reflect the actual comparison contract and impact.
 
 ---
 
-# 28. Required Finding Format
+## 28. Required Finding Format
 
 For every finding, provide:
 
@@ -1520,9 +1524,9 @@ Clearly distinguish confirmed defects from unverified hypotheses.
 
 ---
 
-# 29. Required Final Report
+## 29. Required Final Report
 
-## A. Executive Summary
+### A. Executive Summary
 
 Include:
 
@@ -1534,64 +1538,74 @@ Include:
 - Confidence in conclusions.
 - Areas not fully reviewed.
 
-## B. Architecture Overview
+### B. Architecture Overview
 
 Describe the complete comparison pipeline and major algorithms.
 
-## C. Ranked Findings
+### C. Ranked Findings
 
 | Rank | Finding | Severity | False-Negative Risk | False-Positive Risk | Confidence | Effort |
 |---|---|---|---|---|---|---|
 
 Prioritize missed changes and false equivalence before cosmetic precision improvements.
 
-## D. Detailed Findings
+### D. Detailed Findings
 
 Include every meaningful finding using Section 28.
 
-## E. Missed-Change Risks
+### E. Missed-Change Risks
 
 Group all defects capable of hiding real changes.
 
-## F. False-Difference Problems
+### F. False-Difference Problems
 
 Group cases where unchanged or equivalent constructs are incorrectly reported as changed.
 
-## G. Entity Matching Improvements
+### G. Entity Matching Improvements
 
 Identify weaknesses in symbol identity, rename detection, move detection, and ambiguous matching.
 
-## H. C/C++ Language Coverage
+### H. C/C++ Language Coverage
 
 Document parsing and comparison gaps involving macros, templates, overloads, classes, and compiler extensions.
 
-## I. Semantic Accuracy
+### I. Semantic Accuracy
 
 Identify unsupported semantic claims, incorrect equivalence assumptions, and opportunities for more precise classification.
 
-## J. Source Mapping and Output Integrity
+### J. Source Mapping and Output Integrity
 
 Document location errors, duplicate reports, aggregation defects, and serialization problems.
 
-## K. Adversarial Regression Corpus
+### K. Adversarial Regression Corpus
 
 List generated tests, executed tests, expected outcomes, and uncovered language features.
 
-## L. Architectural Recommendations
+### L. Architectural Recommendations
 
 Identify major improvements to correctness, completeness, precision, and maintainability.
 
-## M. Coverage Report
+### M. Coverage Report
 
 List all reviewed modules, files, comparison modes, and language-feature categories.
 
-## N. Remaining Unknowns
+### N. Remaining Unknowns
 
 Identify questions requiring additional testing, runtime analysis, compiler-specific validation, or production workloads.
 
+### O. Fixes Applied
+
+Written in Phase 2 (Section 32). For each finding ID:
+
+- The fix that was applied.
+- The regression test that failed before the fix and passes after it.
+- The test-suite and ground-truth / oracle results after the fix.
+
+Also list every deferred finding with the reason, and anything discovered while fixing.
+
 ---
 
-# 30. Deep-Review Questions
+## 30. Deep-Review Questions
 
 After the initial review, explicitly investigate:
 
@@ -1635,7 +1649,7 @@ Investigate these questions using source inspection and targeted tests wherever 
 
 ---
 
-# 31. Completion Criteria
+## 31. Completion Criteria
 
 The review is complete only when:
 
@@ -1661,16 +1675,17 @@ The review is complete only when:
 20. Findings have been prioritized.
 21. A final adversarial completeness pass has been completed.
 22. Remaining limitations have been documented.
+23. Phase 2: every confirmed finding fixed and verified, or deferred with a reason, and the Fixes Applied section written.
 
 If repository access, tooling, context, or execution limits prevent complete coverage, explicitly document what remains.
 
-Maintain a persistent review ledger across long sessions and context compactions.
+Maintain a persistent review ledger across long sessions and context compactions. During Phase 2, record in it which findings have been fixed or deferred.
 
 Do not repeatedly rediscover previously analyzed findings.
 
 ---
 
-# 32. Phase 2 — Fix What the Audit Found
+## 32. Phase 2 — Fix What the Audit Found
 
 Only after the Phase 1 report is complete, fix the confirmed findings. Do not start fixing while still auditing — the complete, ranked list is what keeps effort on the highest-value problems instead of the first ones found.
 
@@ -1683,11 +1698,11 @@ Work through the findings in priority order. For each fix:
 
 Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the tool's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
 
-When finished, update the report with a **Fixes Applied** section: what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
+When finished, update the report with the **Fixes Applied** section (Section 29, O): what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
 
 ---
 
-# 33. Final Instruction
+## 33. Final Instruction
 
 **Find incorrect differences, missing differences, incorrect matches, and unjustified claims of equivalence.**
 

@@ -12,7 +12,7 @@ confirmed findings in priority order, each proven by a regression test or a
 before/after measurement. That's for areas where fixing the first thing you find
 does more harm than good: optimization, and soundness-critical tool logic.
 
-### Review & hardening passes
+### Review & fix passes
 
 | Prompt | Use it for |
 |--------|------------|
@@ -40,7 +40,7 @@ does more harm than good: optimization, and soundness-critical tool logic.
 |--------|------------|
 | [`Spec_DiagnosticSystem.md`](Spec_DiagnosticSystem.md) | **Build** a local diagnostics/logging/support system — centralized logging, breadcrumbs, exception capture, and a one-click **Save Diagnostic Report** package (with secret redaction) so a remote user's bug report is actually investigable. |
 | [`Spec_CrashRecovery.md`](Spec_CrashRecovery.md) | **Build** a crash-recovery/autosave safety net — atomic, versioned recovery snapshots separate from normal saves, abnormal-shutdown detection, and explicit restore, so a crash loses minimal work and *never* corrupts the last known-good save. |
-| [`Spec_Testing.md`](Spec_Testing.md) | **Build** a comprehensive, maintainable automated test suite — risk-first (persistence round-trips, failure/cancellation paths, dirty-state, recovery), deterministic and isolated, fast + full tiers, wired into CI. Optimizes for confidence, not coverage %. |
+| [`Spec_Testing.md`](Spec_Testing.md) | **Build** a comprehensive, maintainable automated test suite — risk-first (persistence round-trips, failure/cancellation paths, dirty-state, recovery), deterministic and isolated, fast + full tiers, wired into CI where the project has one. Optimizes for confidence, not coverage %. |
 
 ## CodeReview.md — code hardening
 
@@ -61,24 +61,29 @@ hostile QA tester at once — clicking things in weird orders, double-clicking, 
 dialogs, resizing everything, forcing failures. It audits control enable/disable state
 per app state, cancellation being a true no-op, button/control/visual consistency,
 alignment, sizing, dialogs, file pickers, keyboard/focus, validation, dirty state,
-destructive actions, busy states, theming, DPI scaling, and more — fixing problems
-while respecting the existing design language. Ends with break-your-own-fixes and
-final-polish passes.
+destructive actions, busy states, theming, DPI scaling, browser layouts (narrow
+viewports, zoom, touch), and more — fixing problems while respecting the existing design
+language. Ends with break-your-own-fixes and final-polish passes. Failure and
+fresh-start scenarios run against scratch copies and a backed-up settings location,
+never the user's real data.
 
-Best for desktop/GUI apps (WinForms/WPF, Electron, browser UIs, etc.).
+Best for desktop/GUI apps and browser UIs (WinForms/WPF, Electron, single-page HTML tools, etc.).
 
 ## CodeReview_Workflow.md — workflow & data-lifecycle hardening
 
 Reviews the application as a *complete lifecycle of user work* rather than a set of
 screens. It models the workflow as a state machine (nothing loaded → importing →
-modified → saving → saved → exporting → …) and hammers the transitions where work can
-be lost or corrupted: dirty-state correctness, save round-trips (save → close →
-reopen → verify everything persisted), repeated saves, save-failure safety
-(atomic/temp-file writes; a failed save must never look successful), import being
-non-destructive to current work, chained-cancellation (`Open New → unsaved → Save →
-Save As → Cancel` must abort the whole thing), file identity, export-is-not-save,
-recent files, and full end-to-end user journeys. The golden rule: preserve current
-valid state, attempt the new operation, commit the transition only after it succeeds.
+modified → saving → saved → exporting → …) and hammers the transitions where work can be
+lost or corrupted: dirty-state correctness, save round-trips (save → close → reopen →
+verify everything persisted), repeated saves, save-failure safety (atomic/temp-file
+writes; a failed save must never look successful), import being non-destructive to
+current work, chained-cancellation (`Open New → unsaved → Save → Save As → Cancel` must
+abort the whole thing), file identity, export-is-not-save, recent files, and full
+end-to-end user journeys. The golden rule: preserve current valid state, attempt the new
+operation, commit the transition only after it succeeds. Fixes what it finds as it goes
+(each with a regression test), then re-runs the round-trip journeys and reports the
+data-loss bugs fixed and the risks that remain. Failure scenarios run on scratch copies,
+never the user's real files.
 
 Best for any app where the user creates and saves work (editors, project-based tools).
 
@@ -97,8 +102,8 @@ Best for anything that gets slow with large data, long sessions, or repeated ope
 
 ## CodeReview_WastedCPU.md — wasted-CPU review
 
-An **audit-first** companion to `CodeReview_Performance.md`, focused on computation that never
-needed to happen rather than merely slow code. It separates CPU metrics (latency,
+An **audit-first** companion to `CodeReview_Performance.md`, focused on computation that
+never needed to happen rather than merely slow code. It separates CPU metrics (latency,
 throughput, CPU time, idle CPU), establishes a baseline, then sweeps redundant and
 loop-invariant computation, duplicate work across components, algorithmic complexity
 (nested loops, repeated search/sort/traversal, incremental computation), hot paths and
@@ -107,9 +112,9 @@ concurrency overhead (thread churn, contention, spin-waits, false sharing), idle
 background activity (polling, timer proliferation, needless refreshes), and repeated
 parsing/serialization. Every finding comes with evidence, estimated savings, risk, and
 how to validate it. Emphasis on *multiplicative* waste — a cheap operation run a billion
-times — and on avoiding work before accelerating it. Phase 2 then
-implements the confirmed wins, re-measuring each against the baseline and reverting
-any that don't pay off.
+times — and on avoiding work before accelerating it. Phase 2 then implements the
+confirmed wins, re-measuring each against the baseline and reverting any that don't pay
+off.
 
 Best when a tool burns CPU at scale or while idle.
 
@@ -130,9 +135,9 @@ Best for tools that hold big datasets or indexes in memory, or run for a long ti
 ## CodeReview_TestCoverage.md — test-coverage analysis & remediation
 
 Measures coverage with the language's standard tooling (Coverlet, coverage.py,
-Istanbul/c8, gcov/llvm-cov, `go test -cover`, …) and then deliberately *doesn't* chase the number.
-It builds a baseline, measures line/branch/method coverage, analyzes gaps by risk,
-inspects uncovered code and classifies it (MUST TEST / SHOULD TEST / OPTIONAL /
+Istanbul/c8, gcov/llvm-cov, `go test -cover`, …) and then deliberately *doesn't* chase
+the number. It builds a baseline, measures line/branch/method coverage, analyzes gaps by
+risk, inspects uncovered code and classifies it (MUST TEST / SHOULD TEST / OPTIONAL /
 INTENTIONALLY UNCOVERED / DEAD), checks behavioral coverage across normal, boundary,
 null/empty, invalid-input, exception, async, cancellation, retry, state-transition and
 cleanup scenarios, then adds the missing meaningful tests — investigating (not papering
@@ -254,17 +259,19 @@ Best for any app where users create and edit work they'd hate to lose.
 
 ## Spec_Testing.md — automated testing strategy
 
-An implementation spec (not a review): stand up a comprehensive, maintainable test
-suite whose goal is *confidence*, not a coverage number — explicitly avoiding hundreds
-of trivial getter/setter tests. It tests behavior over implementation, prioritizes by
-risk (data loss, corrupt save/load, invalid state transitions, security), and covers
-happy + failure + boundary + invalid-input paths, persistence round-trips (save →
-destroy in-memory → reload → compare), dirty-state, cancellation and nested
-cancellation, crash-recovery and diagnostic-redaction (when those exist), stale-async
-results, fuzzing for parsers, plus fast/full tiers, deterministic isolated tests, CI
-wiring, and a meta-check: deliberately break important behavior and confirm the suite
-catches it. Complements `Spec_CrashRecovery.md` and `Spec_DiagnosticSystem.md` — it
-tests the subsystems they build.
+An implementation spec (not a review): stand up a comprehensive, maintainable test suite
+whose goal is *confidence*, not a coverage number — explicitly avoiding hundreds of
+trivial getter/setter tests. It starts from a baseline of the existing suite, derives
+expected values from intended behavior (never locking in current bugs), tests behavior
+over implementation, prioritizes by risk (data loss, corrupt save/load, invalid state
+transitions, security), and covers happy + failure + boundary + invalid-input paths,
+persistence round-trips (save → destroy in-memory → reload → compare), dirty-state,
+cancellation and nested cancellation, crash-recovery and diagnostic-redaction (when
+those exist), stale-async results, fuzzing for parsers, plus fast/full tiers,
+deterministic isolated tests, CI wiring where the project has CI, and a meta-check:
+deliberately break important behavior and confirm the suite catches it. Complements
+`Spec_CrashRecovery.md` and `Spec_DiagnosticSystem.md` — it tests the subsystems they
+build.
 
 Best for any project mature enough to protect against regressions (i.e. most of them).
 
@@ -274,12 +281,13 @@ Point a Claude Code session at the repo you want worked on, then paste the promp
 say "follow `Development_Prompts/CodeReview.md`"). Run them separately — each is a
 different job. For a GUI, project-based app, a good order for the review passes is:
 **code** first, then **workflow**, then **UI**, then **performance** (harden behavior
-before chasing speed). The **audit-first** passes (`WastedCPU`, `WastedRAM`,
-and the `CodeCarver` / `CodeDiffer` tool-specific ones) write their full report before
-fixing anything, so you get the ranked findings even if you stop the session early.
-`CodeReview_TestCoverage.md` fits after the code pass, and `CodeReview_GitHubDocumentation.md` is a good last step
-before sharing a repo. `CodeReview_UtilLibrary.md` is for **shared libraries** rather
-than apps — reach for it (in place of or alongside the code pass) when the project is a
-reusable tool belt. `CodeReview_PuzzleGame.md` is a **supplemental** pass for puzzle
-games — run it alongside the general passes. The `Spec_*` prompts are independent — run
-one whenever you want to build that subsystem.
+before chasing speed). The **audit-first** passes (`WastedCPU`, `WastedRAM`, and the
+`CodeCarver` / `CodeDiffer` tool-specific ones) write their full report before fixing
+anything, so you get the ranked findings even if you stop the session early.
+`CodeReview_TestCoverage.md` fits after the code pass, and
+`CodeReview_GitHubDocumentation.md` is a good last step before sharing a repo.
+`CodeReview_UtilLibrary.md` is for **shared libraries** rather than apps — reach for it
+(in place of or alongside the code pass) when the project is a reusable tool belt.
+`CodeReview_PuzzleGame.md` is a **supplemental** pass for puzzle games — run it
+alongside the general passes. The `Spec_*` prompts are independent — run one whenever
+you want to build that subsystem.
