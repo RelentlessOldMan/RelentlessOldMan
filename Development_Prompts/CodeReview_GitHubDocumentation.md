@@ -1003,6 +1003,16 @@ Do not rewrite good documentation simply to make it different.
 
 ---
 
+# Working Practice
+
+- Commit one logical documentation change per commit, with the change named in the subject.
+- After any scripted or bulk edit, run `git diff --stat` and check for surprises: 0-byte files, whole-file churn, line-ending or byte-order-mark changes.
+- On a long session, keep findings and progress in a file at a durable location (the repository's docs folder, or another fixed path the user agrees to), not only in the conversation or a temporary folder.
+- Keep the user informed: post one line when each significant change lands.
+- In the final report, give your recommended option and its cost for every gap or follow-up left open, so the user can decide without another round trip.
+
+---
+
 # 29. Final Review Report
 
 After completing the pass, provide a concise report containing:

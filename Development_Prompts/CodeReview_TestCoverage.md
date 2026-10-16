@@ -840,6 +840,25 @@ Report important uncovered recently changed code separately when this informatio
 
 ---
 
+# Working Practice
+
+Work in small, provable steps:
+
+- For every bug fix, write the regression test first and see it fail on the unfixed code; a test that passes either way proves nothing.
+- Commit one fix (or one tightly coupled group) per commit, with the problem named in the subject, so each fix can be reverted or bisected on its own. A commit is not a release.
+- After any scripted or bulk edit, run `git diff --stat` before building and check for surprises: 0-byte files, whole-file churn, line-ending or byte-order-mark changes.
+- If a related gap is cheap to test (minutes), write the test instead of listing it.
+- On a long session, keep findings and progress in a file at a durable location (the repository's docs folder, or another fixed path the user agrees to), not only in the conversation or a temporary folder, so nothing is lost if the session ends or context is compacted.
+- Keep the user informed: post one line when each significant fix lands and whenever a wait lasts longer than about five minutes, saying what is being waited on.
+
+The final report must also include:
+
+- **Changes to documented behavior:** every change a user could notice (behavior, output format or ordering, public API, saved formats, defaults), or "none".
+- Fixes split into code changes and documentation-only changes, counted separately.
+- For every item left unfixed: your recommended option and its cost, so the user can decide without another round trip.
+
+---
+
 # 30. Final Verification
 
 Before completing the review:

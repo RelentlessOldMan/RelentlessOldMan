@@ -10,7 +10,9 @@ Most review passes fix as they go. A few are **audit-first** (marked below): the
 finish a complete, ranked findings report before changing any code, then fix the
 confirmed findings in priority order, each proven by a regression test or a
 before/after measurement. That's for areas where fixing the first thing you find
-does more harm than good: optimization, and soundness-critical tool logic.
+does more harm than good: optimization, and soundness-critical tool logic. The audit
+ends with a triage: a small "ship now" set that is fixed and released first, and a
+ranked backlog with a cut line below which findings are deferred.
 
 ### Review & fix passes
 
