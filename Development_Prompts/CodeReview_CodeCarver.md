@@ -21,7 +21,7 @@ Find every meaningful situation in which CodeCarver:
 11. Fails silently or produces misleading diagnostics.
 12. Uses overly conservative fallbacks that unnecessarily preserve large amounts of code.
 
-**Do not modify CodeCarver during this review.** Produce a detailed report with concrete findings, evidence, minimal reproductions, root causes, recommended fixes, and prioritized improvements.
+This review has two phases. **Phase 1 — audit:** do not modify code until the audit is complete; produce a detailed report with concrete findings, evidence, minimal reproductions, root causes, recommended fixes, and prioritized improvements. **Phase 2 — fix:** then fix the confirmed findings in priority order, with evidence for each (see the Phase 2 section near the end).
 
 Do not stop after identifying obvious bugs. Review the complete architecture and deliberately search for subtle cases that ordinary tests are unlikely to exercise.
 
@@ -1999,7 +1999,24 @@ If the investigation spans multiple sessions, preserve a persistent review ledge
 
 ---
 
-# 32. Final Instruction
+# 32. Phase 2 — Fix What the Audit Found
+
+Only after the Phase 1 report is complete, fix the confirmed findings. Do not start fixing while still auditing — the complete, ranked list is what keeps effort on the highest-value problems instead of the first ones found.
+
+Work through the findings in priority order. For each fix:
+
+- Turn the finding's minimal reproduction into a regression test first, confirm it fails, then make the fix and confirm it passes.
+- Run the full existing test suite and any ground-truth / oracle checks the project has. A fix that resolves one finding but changes results elsewhere is not done.
+- Keep each fix small and focused; do not bundle unrelated changes.
+- Rebuild and re-run the tests after every fix, not just at the end.
+
+Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to CodeCarver's documented behavior. Leave those in the report as recommendations, with the reason they were deferred.
+
+When finished, update the report with a **Fixes Applied** section: what was fixed (with the before/after evidence or the regression test that proves it), what was deferred and why, and anything discovered while fixing.
+
+---
+
+# 33. Final Instruction
 
 **The purpose of CodeCarver is not merely to produce smaller source code. It is to remove code that is provably unnecessary while preserving everything required by the selected program semantics.**
 
@@ -2019,6 +2036,6 @@ Generate adversarial examples specifically intended to falsify the analyzer's co
 
 For each important language feature, determine both whether CodeCarver safely retains required code and whether it avoids retaining unrelated code.
 
-The final deliverable must be a comprehensive, evidence-supported, prioritized review report containing reproducible defects, architectural weaknesses, missed elimination opportunities, and concrete recommendations.
+The final deliverable must be the fixes applied in Phase 2 plus a comprehensive, evidence-supported, prioritized review report containing reproducible defects, architectural weaknesses, missed elimination opportunities, and concrete recommendations.
 
-**Do not implement fixes. Do not stop after finding obvious problems. Do not declare the review complete until the required coverage has been achieved or all remaining limitations have been explicitly documented.**
+**Do not start fixing until the audit is complete, and do not fix what you cannot verify. Do not stop after finding obvious problems. Do not declare the review complete until the required coverage has been achieved or all remaining limitations have been explicitly documented.**
