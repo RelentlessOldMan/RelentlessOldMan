@@ -25,7 +25,7 @@ This review has two phases. **Phase 1 — audit:** do not modify code until the 
 
 Do not stop after identifying obvious bugs. Review the complete architecture and deliberately search for subtle cases that ordinary tests are unlikely to exercise.
 
-**Safety:** use small corpora by default. Ask the user before any full-scale run (for example a 100 GB CodeSpawner corpus) and before any run against a network share. Write carve output only to a scratch directory — never into or over the source tree being carved.
+**Safety:** use small corpora by default. Ask the user before any very large run and before any run against a network share. Write carve output only to a scratch directory — never into or over the source tree being carved.
 
 ---
 
