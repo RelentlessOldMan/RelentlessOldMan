@@ -1434,11 +1434,10 @@ All seven steps below are part of Phase 1 (audit); do not change code while work
 
 ## Before Step 1: Organize the audit
 
-- For a large codebase, split the audit by area (for example input, core algorithm, storage, output, interfaces), one auditor per area, so coverage does not overlap. Auditors are read-only: they never edit the repository, and each writes its findings to its own file.
-- Give every auditor the same short brief: its area, the safety rules in this specification, where to write its output, and the finding format in Section 23.
+- For a large codebase, review it area by area (for example input, core algorithm, storage, output, interfaces) so coverage is complete and does not overlap, and keep each area's findings in its own file.
 - Give every finding a stable ID (for example an area prefix and a number) and keep it unchanged through Phase 2, commit messages, and later reviews.
 - Mark every finding **CONFIRMED**, with the exact reproducer or measurement (input, command, observed output), or **HYPOTHESIS**. Never fix a hypothesis blind; if it cannot be reproduced here, leave it as a hypothesis and say what would confirm it.
-- The lead merges the area findings into one ranked report, and re-checks every Critical and High finding against the code before ranking it.
+- Merge the area findings into one ranked report, and re-check every Critical and High finding against the code before ranking it.
 - Write the findings files and the merged report to a durable location (the repository's docs folder, or another fixed path the user agrees to), never a temporary or session folder, so they survive the session ending and context compactions.
 
 **Profile first.** Before the source review (Step 3), take one measured run of a representative workload that reports CPU time, wall time, and allocations per phase or subsystem. Use it to aim the review and to rank findings: a finding's priority is the measured share of the run spent where it applies multiplied by the reduction expected there, not how bad the code looks. A finding in a phase that takes under about 5% of a realistic run is Low regardless of its complexity, and may be deferred with the measured share as the reason. If no run is possible, say so and label every ranking an estimate.
@@ -1843,7 +1842,7 @@ Benchmark protocol:
 
 - Build the original and the changed version from separate git worktrees into separate output directories, and print each build's version or hash in the benchmark output, so a run can never silently compare a build with itself.
 - Keep the built binary for every fix, so any two fixes can be compared later without rebuilding.
-- Alternate old and new runs (A, B, A, B, …) for at least four rounds instead of running each back to back, and report the minimum, median, and spread. On a shared machine, back-to-back runs drift.
+- Alternate old and new runs (A, B, A, B, …) for at least four rounds instead of running each back to back, and report the minimum, median, and spread. Back-to-back runs drift with background load.
 - Prefer CPU time and operation counts over wall-clock time alone; wall time on I/O-heavy workloads is often noise.
 - Include at least one small input, to expose start-up costs, and inputs shaped like each ranked finding, so every fixed finding is actually exercised.
 - Check that results are identical before and after (output bytes, or counts of items processed, kept, and dropped).
@@ -2014,8 +2013,6 @@ For each fix:
 Time-box surprises: if an unexpected result is worth chasing, spend at most about 30–45 minutes on it, then write up what was found and either add it as a new finding or defer it.
 
 Keep the user informed: post one line when each fix lands and whenever a wait lasts longer than about five minutes, saying what is being waited on.
-
-If clean timing is not possible right now (the machine is busy, or a shared measurement slot is taken), keep fixing and testing, label those fixes "untimed", and time them together in the next clean window; batch timing into as few windows as possible. Never sit idle waiting for one. Once timed, revert any fix whose gain is negligible.
 
 Finish with one run on the real, full-size workload, after asking the user, and record the result in Fixes Applied.
 

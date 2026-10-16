@@ -1687,11 +1687,10 @@ All of the steps below belong to Phase 1 (audit). They are numbered as steps so 
 
 ### Before Step 1: Organize the audit
 
-- For a large codebase, split the audit by area (for example input, core algorithm, storage, output, interfaces), one auditor per area, so coverage does not overlap. Auditors are read-only: they never edit the repository, and each writes its findings to its own file.
-- Give every auditor the same short brief: its area, the safety rules in this specification, where to write its output, and the finding format in Section 28.
+- For a large codebase, review it area by area (for example input, core algorithm, storage, output, interfaces) so coverage is complete and does not overlap, and keep each area's findings in its own file.
 - Give every finding a stable ID (for example an area prefix and a number) and keep it unchanged through Phase 2, commit messages, and later reviews.
 - Mark every finding **CONFIRMED**, with the exact reproducer or measurement (input, command, observed output), or **HYPOTHESIS**. Never fix a hypothesis blind; if it cannot be reproduced here, leave it as a hypothesis and say what would confirm it.
-- The lead merges the area findings into one ranked report, and re-checks every Critical and High finding against the code before ranking it.
+- Merge the area findings into one ranked report, and re-check every Critical and High finding against the code before ranking it.
 - Write the findings files and the merged report to a durable location (the repository's docs folder, or another fixed path the user agrees to), never a temporary or session folder, so they survive the session ending and context compactions.
 
 ### Step 1: Contract and architecture
@@ -2072,7 +2071,7 @@ Time-box surprises: if an unexpected result is worth chasing, spend at most abou
 
 Keep the user informed: post one line when each fix lands and whenever a wait lasts longer than about five minutes, saying what is being waited on.
 
-Finish by re-running the project's ground-truth oracle on its real corpus against the fixed build. That run is usually large: ask the user first, then follow the project's rules for heavy work. Record the result in Fixes Applied.
+Finish by re-running the project's ground-truth oracle on its real corpus against the fixed build. That run is usually large: ask the user first. Record the result in Fixes Applied.
 
 Do **not** implement findings that are high-risk, speculative, unproven, or that would require a broad architectural change or a change to the tool's documented behavior. Leave those in the report as recommendations, with the reason they were deferred, the reviewer's recommended option, and its cost, so the user can decide without another round trip. Decisions that change documented behavior, a saved format, or a public API belong to the user.
 
