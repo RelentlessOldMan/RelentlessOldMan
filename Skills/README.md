@@ -15,9 +15,8 @@ Claude loads skills from `~/.claude/skills`, so after adding or changing a skill
 That mirrors each skill folder here into `~/.claude/skills`. On a fresh machine, clone
 this repo and run it once to install them all.
 
-The relay loop is one skill per machine: run `.\deploy-skills.ps1 -Side home` on the home PC
-or `.\deploy-skills.ps1 -Side work` on the work PC. Only that side's `relay-loop-*` skill is
-deployed (the other is removed), and the side is remembered for later runs.
+The script deploys the home PC's skills. `relay-loop-work` is the work PC's side of the relay
+loop: the work PC takes it from GitHub, so the script never deploys it (and removes it if present).
 
 ## Skills
 
