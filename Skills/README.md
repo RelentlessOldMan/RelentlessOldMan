@@ -19,6 +19,8 @@ this repo and run it once to install them all.
 
 | Skill | What it does |
 |---|---|
+| `relay-loop-home` | Home PC side of the Discord relay loop with the work box: post instructions, check every 15 minutes, act on the reply, post again. Manual only (`/relay-loop-home <channel>`). |
+| `relay-loop-work` | Work PC side of the same loop: read instructions, act, post the result back, check every 30 minutes. Manual only (`/relay-loop-work <channel>`). |
 | `setup-github-repo` | Stand up a new public repo to these conventions (MIT, no-contributions/auto-close PRs, LF normalization, profile listing). Mirrors `Project_Instructions/REPO-SETUP.md`. |
 | `start-remote-session` | Launch a Claude Code Remote Control session in a target directory from inside an existing session (Windows) — for when you're remote and no session is running there. |
 
