@@ -29,7 +29,6 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 
 ### Magic: The Gathering
 - 🃏 **[Cardinator](https://github.com/RelentlessOldMan/Cardinator)** — a single-file, no-install Windows app for making custom Magic-style cards: look a card up on Scryfall for its text and real art (or make your own), drop in art, pick a frame — including full-art — and export print-ready PNGs and 3×3 print sheets.
-- 🎲 **[MagicSimulator](https://github.com/RelentlessOldMan/MagicSimulator)** — goldfish a Commander deck thousands of times to see how fast it really wins, and test card swaps against the same shuffles to find the ones that help.
 
 ### Fitness
 - 💓 **[HeartRateMonitor](https://github.com/RelentlessOldMan/HeartRateMonitor)** — your live heart rate from a Bluetooth chest strap as a big always-on-top number over your game: zone colors, a live graph, and CSV/TCX recording.
