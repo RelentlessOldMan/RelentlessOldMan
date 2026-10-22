@@ -26,6 +26,7 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 
 ### Rhythm Gaming
 - 🎮 **[NoteSight](https://github.com/RelentlessOldMan/NoteSight)** — an offline auto-charter that turns audio into playable charts for StepMania/ITGmania (`.sm`) and Beat Saber by detecting onsets and beat grids. Local, Python-only, no external system dependencies.
+- 💖 **[SimplyLoveMods](https://github.com/RelentlessOldMan/SimplyLoveMods)** — quality-of-life mods for the Simply Love StepMania theme: a one-press "Just Play" start, a speed mod that sticks, a pause menu, live projected and max-possible score that light up at star pace, and session step stats.
 
 ### Magic: The Gathering
 - 🃏 **[Cardinator](https://github.com/RelentlessOldMan/Cardinator)** — a single-file, no-install Windows app for making custom Magic-style cards: look a card up on Scryfall for its text and real art (or make your own), drop in art, pick a frame — including full-art — and export print-ready PNGs and 3×3 print sheets.
