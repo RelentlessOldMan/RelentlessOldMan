@@ -34,6 +34,9 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 ### Fitness
 - 💓 **[HeartRateMonitor](https://github.com/RelentlessOldMan/HeartRateMonitor)** — your live heart rate from a Bluetooth chest strap as a big always-on-top number over your game: zone colors, a live graph, and CSV/TCX recording.
 
+### Misc
+- 🟡 **[Pacman Pattern Finder](https://github.com/RelentlessOldMan/PacmanPatternFinder)** — finds memorable, timing-tolerant Pac-Man patterns by letting MAME play the game headless under Lua control: a beam search over no-reverse routes, then every turn replayed 1–4 frames late to keep only the forgiving ones. Includes a 5–20 pattern and a level 21+ full clear with both fruits.
+
 ### Elsewhere
 - 🌐 [RelentlessOldMusic.com](https://relentlessoldmusic.com/)
 - 🎵 [RelentlessOldMusic (YouTube)](https://www.youtube.com/@RelentlessOldMusic)
