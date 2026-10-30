@@ -215,7 +215,8 @@ git push -u origin main
 
 ## Step 8 — Add it to the profile README
 
-Clone/pull `RelentlessOldMan/RelentlessOldMan`, add a bullet under the matching
+The local copy is `C:\Playground\RelentlessOldMan`: pull it there (never clone a second
+copy anywhere else), add a bullet under the matching
 section (`Dev / AI`, `Music`, `Rhythm Gaming`, `Magic: The Gathering`, …), commit,
 push. Format:
 

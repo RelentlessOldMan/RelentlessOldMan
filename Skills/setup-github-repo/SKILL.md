@@ -124,7 +124,8 @@ git push -u origin main
 ```
 
 ## Step 8 — list it on the profile
-Clone/pull `RelentlessOldMan/RelentlessOldMan`, add a bullet under the matching
+The local copy is `C:\Playground\RelentlessOldMan`: pull it there (never clone a second
+copy anywhere else), add a bullet under the matching
 section (`Dev / AI`, `Music`, `Rhythm Gaming`, `Magic: The Gathering`, …), push:
 ```markdown
 - <emoji> **[<Name>](https://github.com/RelentlessOldMan/<Name>)** — <one-line hook>.
