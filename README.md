@@ -20,6 +20,9 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 - 🐾 **[FunctionTraceDemo](https://github.com/RelentlessOldMan/FunctionTraceDemo)** — automatic compiler-based function tracing for C/C++ (Clang/LLVM): enter/exit, parameters, and return values injected at build time with zero source changes, built up as `-finstrument-functions`, a custom LLVM pass, and a libclang descriptor generator.
 - 🔌 **[ChatbotAddonDemo](https://github.com/RelentlessOldMan/ChatbotAddonDemo)** — a reference demo of adding AI to a legacy Windows desktop tool (.NET/WPF): an opt-in chat assistant with approvals for anything that writes files or drives hardware, MCP access for coding agents via the console tool, and the customer paying for their own tokens, with diagrams and decision records explaining why.
 
+### Hardware Fiddling
+- 🔧 **[SeggerJlinkDemo](https://github.com/RelentlessOldMan/SeggerJlinkDemo)** — run unmodified Lauterbach PRACTICE (`.cmm`) debugger scripts on a SEGGER J-Link. `cmmrun scan` turns any script collection into an anonymized, shareable report (commands, call graph, where dynamic macros get their values), and `cmmrun check` says which scripts, call trees included, could run and what blocks the rest. Interpreter and J-Link backend in progress.
+
 ### Music
 - 〰️ **[Subtap](https://github.com/RelentlessOldMan/Subtap)** — a single-file, dependency-free desktop tool for retiming song captions (`.srt`) by ear: waveform, tap-sync, and per-line deltas.
 - ▶️ **[Subsync](https://github.com/RelentlessOldMan/Subsync)** — a single-file, dependency-free Windows tool that plays a song's captions (`.srt`) back as keystrokes, driving a lagging synced-lyric display back into time by hand. Sibling to Subtap.
