@@ -1,13 +1,13 @@
 ---
 name: setup-github-repo
-description: Set up a new public GitHub repo to RelentlessOldMan conventions — MIT license, no contributions (auto-close PRs, issues off), LF normalization, signature emoji, and a profile-README listing. Use when publishing a new personal project.
+description: Set up a new public GitHub repo to RelentlessOldMan conventions — MIT license, no contributions (pull requests off, issues limited to collaborators), LF normalization, signature emoji, and a profile-README listing. Use when publishing a new personal project.
 ---
 
 # New GitHub repo setup — RelentlessOldMan conventions
 
 Canonical source: `C:\Playground\RelentlessOldMan\Project_Instructions\REPO-SETUP.md`
 (read it if anything here seems stale). Everything is "personal tool, published
-as-is": **MIT, no contributions, PRs auto-closed, issues off.**
+as-is": **MIT, no contributions: pull requests off, issues limited to collaborators.**
 
 Owner: **RelentlessOldMan** (https://github.com/RelentlessOldMan).
 Ask the user for the **project name**, a **one-line hook**, and a **signature emoji**
@@ -17,10 +17,13 @@ if not given. Use the current year in the copyright line.
 ```powershell
 gh repo create RelentlessOldMan/<Name> --public --description "<one-line hook>"
 ```
-After the first push (Step 7), turn off issues + wiki:
+Turn pull requests and the wiki off, issues on:
 ```powershell
-gh repo edit RelentlessOldMan/<Name> --enable-issues=false --enable-wiki=false
+gh api -X PATCH repos/RelentlessOldMan/<Name> -F has_issues=true -F has_pull_requests=false -F has_wiki=false
 ```
+Then limit issue creation to collaborators. It isn't in the API or `gh`, so use the web UI
+(Claude in Chrome): **Settings → General → Features → Issues → Issue permissions →
+"Creation allowed by: Collaborators only"** (saves on selection). No auto-close workflows.
 
 ## Step 2 — `LICENSE` (MIT) — copyright line verbatim (note the URL suffix)
 ```
@@ -65,55 +68,20 @@ Baseline for every repo: `.vscode/ .idea/ .DS_Store Thumbs.db`.
 Python: `__pycache__/ *.py[cod] *.egg-info/ .venv/ venv/ build/ dist/ *.spec`.
 .NET: `bin/ obj/` + any test-scratch/`.corpus/` dirs. Never commit build output or generated corpora.
 
-## Step 5 — `.github/workflows/close-prs.yml` (canonical filename; replace `<Name>`/`<emoji>`)
-```yaml
-name: Auto-close PRs
-
-# <Name> is a personal tool published as-is and doesn't accept contributions.
-# Any pull request is politely closed automatically.
-
-on:
-  pull_request_target:
-    types: [opened, reopened]
-
-permissions:
-  pull-requests: write
-
-jobs:
-  close:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: "Thanks for looking! <emoji> <Name> is a personal tool, published as-is and not accepting contributions — so this PR will auto-close. Please fork it and make it your own."
-            });
-            await github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              state: "closed"
-            });
-```
-
-## Step 6 — `README.md`
+## Step 5 — `README.md`
 Title `# <Name> <emoji>`, a **bold one-line hook**, optional screenshot, then Why /
 Usage / How it works / Layout. The last two sections are verbatim (only emoji/year change):
 ```markdown
 ## Contributing
 
-This is a personal tool, published as-is — **issues and pull requests aren't accepted** (PRs auto-close). Fork it and make it your own. <emoji>
+This is a personal tool, published as-is, and doesn't take issues or pull requests. Fork it and make it your own. <emoji>
 
 ## License
 
 MIT — see [LICENSE](LICENSE). © <year> RelentlessOldMan.
 ```
 
-## Step 7 — first commit & push
+## Step 6 — first commit & push
 ```powershell
 cd C:\Playground\<Name>
 git init -b main
@@ -123,7 +91,7 @@ git remote add origin https://github.com/RelentlessOldMan/<Name>.git   # skip if
 git push -u origin main
 ```
 
-## Step 8 — list it on the profile
+## Step 7 — list it on the profile
 The local copy is `C:\Playground\RelentlessOldMan`: pull it there (never clone a second
 copy anywhere else), add a bullet under the matching
 section (`Dev / AI`, `Music`, `Rhythm Gaming`, `Magic: The Gathering`, …), push:
@@ -134,12 +102,15 @@ section (`Dev / AI`, `Music`, `Rhythm Gaming`, `Magic: The Gathering`, …), pus
 ## Optional — release script
 Single-file tools ship a `release.ps1` (bump version, tag, `gh release create` with the
 artifact). Larger projects use `make-release.ps1` that publishes a self-contained zip.
+Versions are date-based, `YYYY.M.D.N` (e.g. `2026.11.13.0`, N bumped on every build that
+day, tag `v<version>`); follow `Project_Instructions\VERSIONING.md`, not semver patch bumps.
 
 ## Final checklist
 - [ ] `LICENSE` (MIT, copyright line with URL)
 - [ ] `.gitattributes` (LF normalization)
 - [ ] `.gitignore` (language-appropriate; no build output/corpora)
-- [ ] `.github/workflows/close-prs.yml`
 - [ ] README `## Contributing` (decline) + `## License`, verbatim
-- [ ] Issues disabled (`gh repo edit --enable-issues=false --enable-wiki=false`)
+- [ ] Pull requests off, wiki off (`gh api -X PATCH ... -F has_pull_requests=false -F has_wiki=false`)
+- [ ] Issues on, creation limited to **Collaborators only** (Settings → Features, web UI)
+- [ ] No `close-prs.yml` / `close-issues.yml` workflows
 - [ ] Added to the profile README under the right section
