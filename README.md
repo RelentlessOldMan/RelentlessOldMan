@@ -13,6 +13,7 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 - 🚦 **[ComputeWarden](https://github.com/RelentlessOldMan/ComputeWarden)** — a machine-wide coordination service over MCP that stops multiple AI agents and build tools from saturating one machine at once: cooperative, lease-based reservations plus auto-detected heavy processes, via a local daemon and a thin MCP adapter.
 - 👁️ **[RelentlessEye](https://github.com/RelentlessOldMan/RelentlessEye)** — a channel and live monitor for your dev apps: they describe their own panel and push values over TCP JSON lines; C# and Python clients included.
 - 🧰 **[ToolBelt](https://github.com/RelentlessOldMan/ToolBelt)** — a zero-dependency, cross-platform C# utility library: 180+ small, heavily-tested drop-in helpers across 22 focused divisions (collections, numerics, text, graphs, intervals, async, signal, statistics, and more).
+- 📶 **[SignalForge](https://github.com/RelentlessOldMan/SignalForge)** — signal generation, DSP and measurement, built twice (Python and C#) and checked against shared test vectors.
 - 🧾 **[TranscriptAnalyzer](https://github.com/RelentlessOldMan/TranscriptAnalyzer)** — find out what running Claude Code sessions in parallel really costs, from your own transcripts: every request priced at API list rates, and the cache-rebuild cost split by cause.
 
 ### Dev / AI Demos
