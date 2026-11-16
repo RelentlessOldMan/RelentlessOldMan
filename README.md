@@ -39,6 +39,7 @@ Just some personal tools I felt like sharing — free, as-is, use them however y
 
 ### Misc
 - 🟡 **[Pacman Pattern Finder](https://github.com/RelentlessOldMan/PacmanPatternFinder)** — finds memorable, timing-tolerant Pac-Man patterns by letting MAME play the game headless under Lua control: a beam search over no-reverse routes, then every turn replayed 1–4 frames late to keep only the forgiving ones. Includes a 5–20 pattern and a level 21+ full clear with both fruits.
+- 💊 **[Dr. Mario Combo Finder](https://github.com/RelentlessOldMan/DrMarioComboFinder)** — finds the biggest single-pill combos in NES Dr. Mario that don't break the game: a beam search over pill placements plus a 6502 timing model of the big-combo glitches, every winner proven in Mesen 2. Records: 13 kills with no second controller, 20 with standard pad values on controller 2, 23 (594,600 points) with any value.
 
 ### Elsewhere
 - 🌐 [RelentlessOldMusic.com](https://relentlessoldmusic.com/)
